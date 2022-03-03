@@ -1,10 +1,11 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
-	"strings"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 import "database/sql"
@@ -18,10 +19,27 @@ type ComponentsTree struct {
 	name string `json:"name"`
 }
 
+type CsvLine struct {
+	campus string
+	campus_id string
+	StudentID string
+	user string
+	email string
+	user_id string
+	Grade  string
+	NWEAStandard_Grade string
+	Subject string
+	TestID string
+	date string
+	PercentCorrect string
+	district_id string
+	ProjectedProficiencyLevel4 string
+}
+
 func main() {
 
 	// Remove ConfigFile
-	//*/
+	/*/
 	e := os.Remove(configFilePath)
 	if e != nil {
 		log.Fatal(e)
@@ -32,21 +50,79 @@ func main() {
 
 func generateComponents() {
 
-	db, err := sql.Open("mysql", "root:eStud10@/e2lyii_new2")
+	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
 	defer db.Close()
 
+	/*/
 	appendToFile("<" + "?" + "xml version=\"1+0\" encoding=\"UTF-8\"" + "?" + ">" + "\n" +
 		"<root>\n" +
 		"<@array >")
+	//*/
 
+	// /Users/alexhawley/Documents/tmp/go_enrich_dataDallas_AIM_Map_11.2.21.csv
+
+
+	filename := "/Users/alexhawley/Documents/tmp/go_enrich_data/Dallas_AIM_Map_11.2.21.csv"
+
+	// Open CSV file
+	f, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	// Read File into a Variable
+	lines, err := csv.NewReader(f).ReadAll()
+	if err != nil {
+		panic(err)
+	}
+
+	// Loop through lines & turn into object
+	for _, line := range lines {
+		data := CsvLine{
+
+			campus: line[0],
+			campus_id: line[1],
+			StudentID: line[2],
+			user: line[3],
+			email: line[4],
+			user_id: line[5],
+			Grade: line[6],
+			NWEAStandard_Grade: line[7],
+			Subject: line[8],
+			TestID: line[9],
+			date: line[10],
+			PercentCorrect: line[11],
+			district_id: line[12],
+			ProjectedProficiencyLevel4: line[13],
+		}
+
+		fmt.Println(data.campus)
+		fmt.Println(data.campus_id)
+		fmt.Println(data.StudentID)
+		fmt.Println(data.user)
+		fmt.Println(data.email)
+		fmt.Println(data.user_id)
+		fmt.Println(data.Grade)
+		fmt.Println(data.NWEAStandard_Grade)
+		fmt.Println(data.Subject)
+		fmt.Println(data.TestID)
+		fmt.Println(data.date)
+		fmt.Println(data.PercentCorrect)
+		fmt.Println(data.district_id)
+		fmt.Println(data.ProjectedProficiencyLevel4)
+	}
+
+	//*/
 	results, err := db.Query("SELECT dct.id, dct.name " +
 		"FROM devdocs_component_tree dct " +
 		"LEFT JOIN devdocs_component_tree_parent dctp " +
 		"ON dct.id = dctp.component_id " +
 		"WHERE dctp.parent_id IS NULL ORDER BY name")
+
 	if err != nil {
 		fmt.Print(err.Error())
 	}
@@ -57,28 +133,16 @@ func generateComponents() {
 		if err != nil {
 			fmt.Print(err.Error())
 		}
-		appendToFile("<@hash-array-item >" +
-			"<@key>text</@key>" +
-			"<@value>" + strings.ReplaceAll(componentsTree.name, "-", "_") + "</@value>")
-		appendToFile("<@key>state</@key>" + "<@hash-array-item >" +
-			"<@key>opened</@key>" +
-			"<@value>true</@value>" +
-			"</@hash-array-item>" +
-			"<@key>id</@key>" +
-			"<@value>" + string(componentsTree.id) + "</@value>" +
-			"<@key>children</@key>")
-
-		_genComps(componentsTree)
-		appendToFile("</@hash-array-item>")
+		fmt.Println(componentsTree.name)
 	}
-	appendToFile("</@array>" + "</root>")
+	//*/
 }
 
 func _genComps(component ComponentsTree) {
 
 	time.Sleep( 300 * time.Millisecond)
 
-	db, err := sql.Open("mysql", "root:eStud10@/e2lyii_new2")
+	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
 		fmt.Print(err.Error())
 	}

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="@v1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/rsc.io/sampler/@v/v1.3.0.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/rsc.io/sampler/@v/v1.99.99.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/rsc.io/sampler/@v/v1.3.1.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
