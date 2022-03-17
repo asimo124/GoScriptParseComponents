@@ -183,7 +183,9 @@ func enrichData(startDate string, endDate string) {
 			"ON eb.user_id = bu.id " +
 			"LEFT JOIN egrowe_badge b " +
 			"oN eb.egrowe_badge_id = b.id " +
-			"WHERE 1 AND bu.email = '" + data.Email + "' ")
+			"WHERE 1 " +
+			"AND eb.created_at BETWEEN " + startDate + " AND " + endDate + " " +
+			"AND bu.email = '" + data.Email + "' ")
 		if err3 != nil {
 			fmt.Println(err3.Error())
 		}
