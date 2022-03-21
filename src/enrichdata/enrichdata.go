@@ -44,22 +44,33 @@ func main() {
 	if (len(os.Args) < 6) {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
-		fmt.Println("CORRECT Usage: enrichdata {fileName} {startDateStr} {endDateStr} {emailColumnIndex} {columnCountIndex")
+		fmt.Println("CORRECT Usage: enrichdata {fileName} {startDateStr} {endDateStr} {emailColumnIndex} {columnCountIndex} {endDateStrMOY} {timeOfYearColumnIndex}")
 		fmt.Println("")
 		fmt.Println("{fileName} - name of source file, which should be in /Users/alexhawley/Documents/tmp/go_enrich_data")
 		fmt.Println("{startDateStr} - start of date range - (YYYY-mm-dd)")
 		fmt.Println("{endDateStr} - end of date range - (YYYY-mm-dd)")
 		fmt.Println("{emailColumnIndex} - the index of which column (0 based) that contains the email")
 		fmt.Println("{columnCountIndex} - the number of valid columns in the source file")
+		fmt.Println("{endDateStrMOY} - end of date range for MOY (as compared to BOY)")
+		fmt.Println("{timeOfYearColumnIndex} - Index of 'TimeOfYear' column (0 based) that determines BOY or MOY")
 		fmt.Println("")
 		fmt.Println("")
 	}
+	endDateMoyStr := "01/31 11:59:00PM '69 -0000"
+	timeOfYearColumnIndexStr := "-1"
 	layout := "01/02 03:04:05PM '06 -0700"
 	fileName := os.Args[1]
 	startDateStr := os.Args[2]
 	endDateStr := os.Args[3]
 	emailColumnIndexStr := os.Args[4]
 	columnCountStr := os.Args[5]
+	if (len(os.Args) > 6) {
+		endDateMoyStr = os.Args[6]
+	}
+	if (len(os.Args) > 7) {
+		timeOfYearColumnIndexStr = os.Args[7]
+	}
+
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1: " + err.Error())
@@ -71,6 +82,14 @@ func main() {
 		os.Exit(1)
 	}
 	columnCount := int(columnCount64)
+
+	timeOfYearColumnIndex64, err := strconv.ParseInt(timeOfYearColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	timeOfYearColumnIndex:= int(timeOfYearColumnIndex64)
+
 	value := convertStrToDate(startDateStr)
 	t, _ := time.Parse(layout, value)
 	startDate:= strconv.FormatInt(t.Unix(), 10)
@@ -78,7 +97,12 @@ func main() {
 	value2 := convertStrToDate(endDateStr)
 	t2, _ := time.Parse(layout, value2)
 	endDate:= strconv.FormatInt(t2.Unix(), 10)
-	enrichData(fileName, startDate, endDate, emailColumnIndex, columnCount)
+
+	value3 := convertStrToDate(endDateMoyStr)
+	t3, _ := time.Parse(layout, value3)
+	endDateMoy := strconv.FormatInt(t3.Unix(), 10)
+
+	enrichData(fileName, startDate, endDate, emailColumnIndex, columnCount, endDateMoy, timeOfYearColumnIndex)
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
@@ -92,16 +116,19 @@ func convertStrToDate(str string) string {
 func test(num int) {
 
 }
-func enrichData(fileName string, startDate string, endDate string, emailColumnIndex int64, columnCount int) {
+func enrichData(fileName string, startDate string, endDate string, emailColumnIndex int64, columnCount int,
+	endDateMoy string, timeOfYearColumnIndex int) {
 	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
 		fmt.Print("Error 2: " + err.Error())
 	}
 	defer db.Close()
+
 	fileNameOutput := strings.Replace(fileName, ".csv", "_output.csv", 1)
 	filename := "/Users/alexhawley/Documents/tmp/go_enrich_data/" + fileName
 	filenameOutput := "/Users/alexhawley/Documents/tmp/go_enrich_data/" + fileNameOutput
 	f, err := os.Open(filename)
+
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +142,16 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 		log.Fatalf("failed creating file: %s", err)
 	}
 	csvwriter := csv.NewWriter(csvFile)
+
 	for i, line := range lines {
+
+		useEndDate := endDate
+		if (timeOfYearColumnIndex > -1) {
+			if (line[timeOfYearColumnIndex] == "MOY") {
+				useEndDate = endDateMoy
+			}
+		}
+
 		results3, err3 := db.Query("SELECT bu.email, count(eb.id) as TotalBadgesEarned" +
 			", SUM(" +
 			"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 1 THEN 1 ELSE 0 END" +
@@ -135,7 +171,7 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 			"LEFT JOIN egrowe_badge b " +
 			"oN eb.egrowe_badge_id = b.id " +
 			"WHERE 1 " +
-			"AND eb.created_at BETWEEN " + startDate + " AND " + endDate + " " +
+			"AND eb.created_at BETWEEN " + startDate + " AND " + useEndDate + " " +
 			"AND bu.email = '" + line[emailColumnIndex] + "' ")
 		if err3 != nil {
 			fmt.Println("Error 3: " + err3.Error())
@@ -167,7 +203,7 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 				"FROM egrowe_coachlog cl " +
 				"INNER JOIN egrowe_coachlog_attendee cla " +
 					"ON cl.id = cla.egrowe_coachlog_id " +
-					"AND cl.start_datetime BETWEEN " + startDate + " AND " + endDate + " " +
+					"AND cl.start_datetime BETWEEN " + startDate + " AND " + useEndDate + " " +
 				"INNER JOIN egrowe_coachlog_type clt " +
 					"ON cl.egrowe_coachlog_type_id = clt.id " +
 				"INNER JOIN `user` cu " +
