@@ -152,173 +152,208 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 			}
 		}
 
-		results3, err3 := db.Query("SELECT bu.email, count(eb.id) as TotalBadgesEarned" +
-			", SUM(" +
-			"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 1 THEN 1 ELSE 0 END" +
-			") AS level1_badges_earned_count" +
-			", SUM(" +
-			"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 2 THEN 1 ELSE 0 END" +
-			") AS level2_badges_earned_count" +
-			", SUM(" +
-			"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 3 THEN 1 ELSE 0 END" +
-			") AS level3_badges_earned_count" +
-			", SUM(" +
-			"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 4 THEN 1 ELSE 0 END" +
-			") AS level4_badges_earned_count " +
-			"FROM `user` bu " +
-			"LEFT JOIN egrowe_user_badge eb " +
-			"ON eb.user_id = bu.id " +
-			"LEFT JOIN egrowe_badge b " +
-			"oN eb.egrowe_badge_id = b.id " +
-			"WHERE 1 " +
-			"AND eb.created_at BETWEEN " + startDate + " AND " + useEndDate + " " +
-			"AND bu.email = '" + line[emailColumnIndex] + "' ")
-		if err3 != nil {
-			fmt.Println("Error 3: " + err3.Error())
-		}
-		var userBadges UserBadges
-		for results3.Next() {
-			err3 = results3.Scan(&userBadges.email, &userBadges.TotalBadgesEarned,
-				&userBadges.level1_badges_earned_count, &userBadges.level2_badges_earned_count,
-				&userBadges.level3_badges_earned_count, &userBadges.level4_badges_earned_count)
+		TotalBadgesEarned := 0
+		level1_badges_earned_count := 0
+		level2_badges_earned_count := 0
+		level3_badges_earned_count := 0
+		level4_badges_earned_count := 0
+
+		if line[emailColumnIndex] != "" {
+
+			results3, err3 := db.Query("SELECT ifnull(bu.email, ''), ifnull(count(eb.id), 0) as TotalBadgesEarned" +
+				", ifnull(SUM(" +
+				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 1 THEN 1 ELSE 0 END" +
+				"), 0) AS level1_badges_earned_count" +
+				", ifnull(SUM(" +
+				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 2 THEN 1 ELSE 0 END" +
+				"), 0) AS level2_badges_earned_count" +
+				", ifnull(SUM(" +
+				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 3 THEN 1 ELSE 0 END" +
+				"), 0) AS level3_badges_earned_count" +
+				", ifnull(SUM(" +
+				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 4 THEN 1 ELSE 0 END" +
+				"), 0) AS level4_badges_earned_count " +
+				"FROM `user` bu " +
+				"LEFT JOIN egrowe_user_badge eb " +
+				"ON eb.user_id = bu.id " +
+				"LEFT JOIN egrowe_badge b " +
+				"oN eb.egrowe_badge_id = b.id " +
+				"WHERE 1 " +
+				"AND eb.created_at BETWEEN " + startDate + " AND " + useEndDate + " " +
+				"AND bu.email = '" + line[emailColumnIndex] + "' ")
 			if err3 != nil {
-
-			} else {
-
+				fmt.Println("Error 3: " + err3.Error())
 			}
-		}
-		results, err := db.Query("SELECT u.email as email, COUNT(cl.id) as TotalCoachingTouches, " +
-			"u.id as user_id, u.district_id, d.title as 'district', u.school_id as campus_id, s.title as campus, " +
-			"up.first_name, up.last_name, CONCAT(up.first_name, ' ', up.last_name) as 'user', " +
-			"ifnull(CASE " +
-			"WHEN u.coachee_type = 'teacher' THEN 'Teacher' " +
-			"WHEN u.coachee_type = 'librarian' THEN 'Librarian' " +
-			"WHEN u.coachee_type = 'coach' THEN 'Coach' " +
-			"WHEN u.coachee_type = 'campus-admin' THEN 'Campus Admin' " +
-			"WHEN u.coachee_type = 'district-admin' " +
-			"THEN 'District Admin' ELSE u.coachee_type END, '') AS user_type, up.title, ifnull(u.last_login, 0), " +
-			"ifnull(uc.coach_id, 0) as 'assigned_coach_user_id', " +
-			"ifnull(CASE WHEN ( " +
-				"SELECT COUNT(cl.id) " +
-				"FROM egrowe_coachlog cl " +
-				"INNER JOIN egrowe_coachlog_attendee cla " +
+			var userBadges UserBadges
+			for results3.Next() {
+				err3 = results3.Scan(&userBadges.email, &userBadges.TotalBadgesEarned,
+					&userBadges.level1_badges_earned_count, &userBadges.level2_badges_earned_count,
+					&userBadges.level3_badges_earned_count, &userBadges.level4_badges_earned_count)
+				if err3 != nil {
+					fmt.Println("err3: ", err3)
+				} else {
+
+					TotalBadgesEarned = userBadges.TotalBadgesEarned
+					level1_badges_earned_count = userBadges.level1_badges_earned_count
+					level2_badges_earned_count = userBadges.level2_badges_earned_count
+					level3_badges_earned_count = userBadges.level3_badges_earned_count
+					level4_badges_earned_count = userBadges.level4_badges_earned_count
+
+				}
+			}
+
+			results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
+				"ifnull(COUNT(cl.id), 0) as TotalCoachingTouches, ifnull(u.id, 0) as user_id, " +
+				"ifnull(u.district_id, 0), ifnull(d.title, '') as 'district', ifnull(u.school_id, 0) as campus_id, " +
+				"ifnull(s.title, '') as campus, ifnull(up.first_name, '') as first_name, " +
+				"ifnull(up.last_name, '') as last_name, " +
+				"ifnull(CONCAT(up.first_name, ' ', up.last_name), '') as 'user', " +
+				"ifnull(CASE " +
+				"WHEN u.coachee_type = 'teacher' THEN 'Teacher' " +
+				"WHEN u.coachee_type = 'librarian' THEN 'Librarian' " +
+				"WHEN u.coachee_type = 'coach' THEN 'Coach' " +
+				"WHEN u.coachee_type = 'campus-admin' THEN 'Campus Admin' " +
+				"WHEN u.coachee_type = 'district-admin' " +
+				"THEN 'District Admin' ELSE u.coachee_type END, '') AS user_type, " +
+				"ifnull(up.title, '') as title, ifnull(u.last_login, 0), " +
+				"ifnull(uc.coach_id, 0) as 'assigned_coach_user_id', " +
+				"ifnull(CASE WHEN ( " +
+					"SELECT COUNT(cl.id) " +
+					"FROM egrowe_coachlog cl " +
+					"INNER JOIN egrowe_coachlog_attendee cla " +
 					"ON cl.id = cla.egrowe_coachlog_id " +
 					"AND cl.start_datetime BETWEEN " + startDate + " AND " + useEndDate + " " +
-				"INNER JOIN egrowe_coachlog_type clt " +
+					"INNER JOIN egrowe_coachlog_type clt " +
 					"ON cl.egrowe_coachlog_type_id = clt.id " +
-				"INNER JOIN `user` cu " +
+					"INNER JOIN `user` cu " +
 					"ON cl.user_id = cu.id " +
-				"WHERE 1 AND cl.is_deleted = 0 AND cl.is_practice = 0 AND cla.present = 1 AND clt.is_coaching = 1 " +
-				"AND cla.user_id = u.id AND cu.district_id = 2 " +
-			") > 0 THEN 'engage2learn' ELSE 'District' END, '') as coaching_source, " +
-			"ifnull(CONCAT(uccp.first_name, ' ', uccp.last_name), 0) as assigned_coach, " +
-			"IF(ucc.district_id = 2, 'engage2learn', " +
-			"if(ucc.district_id is null, 'Unassigned', 'District')) as coaching_assignment " +
-			"FROM `user` u " +
-			"LEFT JOIN `user_profile` up " +
+					"WHERE 1 AND cl.is_deleted = 0 AND cl.is_practice = 0 AND cla.present = 1 AND clt.is_coaching = 1 " +
+					"AND cla.user_id = u.id AND cu.district_id = 2 " +
+				") > 0 THEN 'engage2learn' ELSE 'District' END, '') as coaching_source, " +
+				"ifnull(CONCAT(uccp.first_name, ' ', uccp.last_name), 0) as assigned_coach, " +
+				"IF(ucc.district_id = 2, 'engage2learn', " +
+				"if(ucc.district_id is null, 'Unassigned', 'District')) as coaching_assignment " +
+				"FROM `user` u " +
+				"LEFT JOIN `user_profile` up " +
 				"ON u.id = up.user_id " +
-			"LEFT JOIN `district` d " +
+				"LEFT JOIN `district` d " +
 				"ON u.district_id = d.id " +
-			"LEFT JOIN `school` s " +
+				"LEFT JOIN `school` s " +
 				"ON u.school_id = s.id " +
-			"LEFT JOIN `user_coach` uc " +
+				"LEFT JOIN `user_coach` uc " +
 				"ON u.id = uc.coachee_id " +
 				"AND uc.is_current = 1 " +
-			"LEFT JOIN `user` ucc " +
+				"LEFT JOIN `user` ucc " +
 				"ON uc.coach_id = ucc.id " +
-			"LEFT JOIN user_profile uccp " +
+				"LEFT JOIN user_profile uccp " +
 				"ON ucc.id = uccp.user_id " +
-			"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
+				"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
 				"ON u.id = cla1.user_id AND cla1.present = 1 " +
-			"LEFT JOIN egrowe_coachlog cl " +
+				"LEFT JOIN egrowe_coachlog cl " +
 				"ON cla1.egrowe_coachlog_id = cl.id " +
 				"AND cl.is_practice = 0 " +
 				"AND cl.is_deleted = 0 " +
-			"LEFT JOIN egrowe_coachlog_type clt " +
+				"LEFT JOIN egrowe_coachlog_type clt " +
 				"ON cl.egrowe_coachlog_type_id = clt.id " +
 				"AND clt.is_coaching = 1 " +
-			"WHERE 1 " +
-			"AND u.email = '" + line[emailColumnIndex] + "' ")
-		if err != nil {
-			fmt.Print(err.Error())
-		}
-		var userInfo UserInfo
-		for results.Next() {
-			var records2 []string
-			j := 0
-			for i := 0; i < columnCount - 1; i++ {
-				records2 = append(records2, line[i])
-				j = i
+				"WHERE 1 " +
+				"AND u.email = '" + line[emailColumnIndex] + "' ")
+			if err != nil {
+				fmt.Print(err.Error())
 			}
-			test(j)
-			if (i == 0) {
-				records2 = append(records2, "email")
-				records2 = append(records2, "total_coaching_touches")
-				records2 = append(records2, "user_id")
-				records2 = append(records2, "district_id")
-				records2 = append(records2, "distrrict")
-				records2 = append(records2, "campus_id")
-				records2 = append(records2, "campus")
-				records2 = append(records2, "first_name")
-				records2 = append(records2, "last_name")
-				records2 = append(records2, "user")
-				records2 = append(records2, "user_type")
-				records2 = append(records2, "title")
-				records2 = append(records2, "last_login")
-				records2 = append(records2, "assigned_coach_user_id")
-				records2 = append(records2, "coaching_source")
-				records2 = append(records2, "assigned_coach")
-				records2 = append(records2, "coaching_assignment")
-				records2 = append(records2, "total_badges_earned")
-				records2 = append(records2, "leve1l_badges_earned_count")
-				records2 = append(records2, "leve2l_badges_earned_count")
-				records2 = append(records2, "leve3l_badges_earned_count")
-				records2 = append(records2, "leve4l_badges_earned_count")
-				_ = csvwriter.Write(records2)
-				csvwriter.Flush()
-			} else {  // after first line
+			var userInfo UserInfo
+			for results.Next() {
 				var records2 []string
 				j := 0
-				for i := 0; i < columnCount - 1; i++ {
+				for i := 0; i < columnCount-1; i++ {
 					records2 = append(records2, line[i])
 					j = i
 				}
-				err = results.Scan(&userInfo.email, &userInfo.TotalCoachingTouches, &userInfo.user_id, &userInfo.district_id,
-					&userInfo.district, &userInfo.campus_id, &userInfo.campus, &userInfo.first_name, &userInfo.last_name,
-					&userInfo.user, &userInfo.user_type, &userInfo.title, &userInfo.last_login,
-					&userInfo.assigned_coach_user_id, &userInfo.coaching_source, &userInfo.assigned_coach,
-					&userInfo.coaching_assignment)
-				if err != nil {
-					for i := j; i < 23; i++ {
-						records2 = append(records2, "")
+				test(j)
+				if (i == 0) {
+					records2 = append(records2, "email")
+					records2 = append(records2, "total_coaching_touches")
+					records2 = append(records2, "user_id")
+					records2 = append(records2, "district_id")
+					records2 = append(records2, "distrrict")
+					records2 = append(records2, "campus_id")
+					records2 = append(records2, "campus")
+					records2 = append(records2, "first_name")
+					records2 = append(records2, "last_name")
+					records2 = append(records2, "user")
+					records2 = append(records2, "user_type")
+					records2 = append(records2, "title")
+					records2 = append(records2, "last_login")
+					records2 = append(records2, "assigned_coach_user_id")
+					records2 = append(records2, "coaching_source")
+					records2 = append(records2, "assigned_coach")
+					records2 = append(records2, "coaching_assignment")
+					records2 = append(records2, "total_badges_earned")
+					records2 = append(records2, "leve1l_badges_earned_count")
+					records2 = append(records2, "leve2l_badges_earned_count")
+					records2 = append(records2, "leve3l_badges_earned_count")
+					records2 = append(records2, "leve4l_badges_earned_count")
+					_ = csvwriter.Write(records2)
+					csvwriter.Flush()
+				} else { // after first line
+					var records2 []string
+					j := 0
+					for i := 0; i < columnCount-1; i++ {
+						records2 = append(records2, line[i])
+						j = i
 					}
-					_ = csvwriter.Write(records2)
-				} else {
-					records2 = append(records2, userInfo.email)
-					records2 = append(records2, strconv.Itoa(userInfo.TotalCoachingTouches))
-					records2 = append(records2, strconv.Itoa(userInfo.user_id))
-					records2 = append(records2, strconv.Itoa(userInfo.district_id))
-					records2 = append(records2, userInfo.district)
-					records2 = append(records2, strconv.Itoa(userInfo.campus_id))
-					records2 = append(records2, userInfo.campus)
-					records2 = append(records2, userInfo.first_name)
-					records2 = append(records2, userInfo.last_name)
-					records2 = append(records2, userInfo.user)
-					records2 = append(records2, userInfo.user_type)
-					records2 = append(records2, userInfo.title)
-					records2 = append(records2, strconv.Itoa(userInfo.last_login))
-					records2 = append(records2, strconv.Itoa(userInfo.assigned_coach_user_id))
-					records2 = append(records2, userInfo.coaching_source)
-					records2 = append(records2, userInfo.assigned_coach)
-					records2 = append(records2, userInfo.coaching_assignment)
-					records2 = append(records2, strconv.Itoa(userBadges.TotalBadgesEarned))
-					records2 = append(records2, strconv.Itoa(userBadges.level1_badges_earned_count))
-					records2 = append(records2, strconv.Itoa(userBadges.level2_badges_earned_count))
-					records2 = append(records2, strconv.Itoa(userBadges.level3_badges_earned_count))
-					records2 = append(records2, strconv.Itoa(userBadges.level4_badges_earned_count))
-					_ = csvwriter.Write(records2)
+					err = results.Scan(&userInfo.email, &userInfo.TotalCoachingTouches, &userInfo.user_id, &userInfo.district_id,
+						&userInfo.district, &userInfo.campus_id, &userInfo.campus, &userInfo.first_name, &userInfo.last_name,
+						&userInfo.user, &userInfo.user_type, &userInfo.title, &userInfo.last_login,
+						&userInfo.assigned_coach_user_id, &userInfo.coaching_source, &userInfo.assigned_coach,
+						&userInfo.coaching_assignment)
+					if err != nil {
+
+						fmt.Println("err: ", err)
+
+						for i := j; i < 23; i++ {
+							records2 = append(records2, "")
+						}
+						_ = csvwriter.Write(records2)
+					} else {
+						records2 = append(records2, userInfo.email)
+						records2 = append(records2, strconv.Itoa(userInfo.TotalCoachingTouches))
+						records2 = append(records2, strconv.Itoa(userInfo.user_id))
+						records2 = append(records2, strconv.Itoa(userInfo.district_id))
+						records2 = append(records2, userInfo.district)
+						records2 = append(records2, strconv.Itoa(userInfo.campus_id))
+						records2 = append(records2, userInfo.campus)
+						records2 = append(records2, userInfo.first_name)
+						records2 = append(records2, userInfo.last_name)
+						records2 = append(records2, userInfo.user)
+						records2 = append(records2, userInfo.user_type)
+						records2 = append(records2, userInfo.title)
+						records2 = append(records2, strconv.Itoa(userInfo.last_login))
+						records2 = append(records2, strconv.Itoa(userInfo.assigned_coach_user_id))
+						records2 = append(records2, userInfo.coaching_source)
+						records2 = append(records2, userInfo.assigned_coach)
+						records2 = append(records2, userInfo.coaching_assignment)
+						records2 = append(records2, strconv.Itoa(TotalBadgesEarned))
+						records2 = append(records2, strconv.Itoa(level1_badges_earned_count))
+						records2 = append(records2, strconv.Itoa(level2_badges_earned_count))
+						records2 = append(records2, strconv.Itoa(level3_badges_earned_count))
+						records2 = append(records2, strconv.Itoa(level4_badges_earned_count))
+						_ = csvwriter.Write(records2)
+					}
 				}
 			}
+		} else {
+			var records2 []string
+			j := 0
+			for i := 0; i < columnCount-1; i++ {
+				records2 = append(records2, line[i])
+				j = i
+			}
+			_ = csvwriter.Write(records2)
+			for i := j; i < 23; i++ {
+				records2 = append(records2, "")
+			}
+			_ = csvwriter.Write(records2)
 		}
 	}
 	csvwriter.Flush()
