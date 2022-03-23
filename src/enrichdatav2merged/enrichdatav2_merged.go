@@ -106,6 +106,27 @@ func convertStrToDate(str string) string {
 	fmt.Println("Date format must be in YYYY-mm-dd")
 	return ""
 }
+
+func convertStrToDateStandard(str string) string {
+	strArr := strings.Split(str, "/")
+	if (len(strArr) > 2) {
+		year := strArr[2]
+
+		month := strArr[0]
+		if len(month) == 1 {
+			month = "0" + month
+		}
+		day := strArr[1]
+		if len(day) == 1 {
+			day = "0" + day
+		}
+		retStr := month + "/" + day + " 06:00:00AM '" + year + " -0600"
+		return retStr
+	}
+	//fmt.Println("Date format must be in YYYY-mm-dd")
+	return ""
+}
+
 func test(num int) {
 
 }
@@ -139,6 +160,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 	for i, line := range lines {
 
 		startDateCumulative := "1496275200" // 2017-06-01 (start of valid esuite logs/gis)
+		//startDateCumulativeInt := 1496275200
 
 		TotalBadgesEarnedBoy := 0
 		level1_badges_earned_countBoy := 0
@@ -176,9 +198,28 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		test(level3_badges_earned_countMoyCumulative)
 		test(level4_badges_earned_countMoyCumulative)
 
-		boyEndDate := line[boyEndDateTimeStampIndex]
+		layout := "01/02 03:04:05PM '06 -0700"
+		boyEndDateStr := line[boyEndDateTimeStampIndex]
+		value := convertStrToDateStandard(boyEndDateStr)
+		t, _ := time.Parse(layout, value)
+		boyEndDate := strconv.FormatInt(t.Unix(), 10)
 
-		moyEndDate := line[moyEndDateTimeStampIndex]
+		moyEndDateStr := line[moyEndDateTimeStampIndex]
+		value2 := convertStrToDateStandard(moyEndDateStr)
+		t2, _ := time.Parse(layout, value2)
+		moyEndDate := strconv.FormatInt(t2.Unix(), 10)
+
+		/*/
+		moyEndDateInt64, err := strconv.ParseInt(moyEndDateStr, 10, 64)
+		if err != nil {
+			fmt.Print("Error 1.5: " + err.Error())
+			os.Exit(1)
+		}
+		moyEndDateInt := int(moyEndDateInt64)
+		if (moyEndDateInt <= startDateCumulativeInt) {
+			moyEndDateStr = "0"
+		}
+		//*/
 
 		if i > 0 {
 
@@ -323,7 +364,6 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				/**
 				 * Query "MOY - Cumulative" Badges count
 				 */
-
 				results5, err5 := db.Query("SELECT ifnull(bu.email, ''), " +
 					"ifnull(count(eb.id), 0) as TotalBadgesEarnedBoy, " +
 					"ifnull(SUM(" +
