@@ -107,6 +107,27 @@ func convertStrToDate(str string) string {
 	fmt.Println("Date format must be in YYYY-mm-dd")
 	return ""
 }
+
+func convertStrToDateStandard(str string) string {
+	strArr := strings.Split(str, "/")
+	if (len(strArr) > 2) {
+		year := strArr[2]
+
+		month := strArr[0]
+		if len(month) == 1 {
+			month = "0" + month
+		}
+		day := strArr[1]
+		if len(day) == 1 {
+			day = "0" + day
+		}
+		retStr := month + "/" + day + " 06:00:00AM '" + year + " -0600"
+		return retStr
+	}
+	//fmt.Println("Date format must be in YYYY-mm-dd")
+	return ""
+}
+
 func test(num int) {
 
 }
@@ -159,7 +180,12 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 		test(level3_badges_earned_countCumulative)
 		test(level4_badges_earned_countCumulative)
 
-		useEndDate := line[endDateTimeStampIndex]
+		layout := "01/02 03:04:05PM '06 -0700"
+		useEndDateStr := line[endDateTimeStampIndex]
+		value := convertStrToDateStandard(useEndDateStr)
+		t, _ := time.Parse(layout, value)
+		useEndDate := strconv.FormatInt(t.Unix(), 10)
+
 		if i > 0 {
 
 			/**
@@ -194,16 +220,16 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 			results3, err3 := db.Query("SELECT ifnull(bu.email, '') " +
 				", ifnull(count(eb.id), 0) as TotalBadgesEarned" +
 				", ifnull(SUM(" +
-				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 1 THEN 1 ELSE 0 END" +
+				"CASE WHEN b.`level` = 1 THEN 1 ELSE 0 END" +
 				"), 0) AS level1_badges_earned_count" +
 				", ifnull(SUM(" +
-				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 2 THEN 1 ELSE 0 END" +
+				"CASE WHEN b.`level` = 2 THEN 1 ELSE 0 END" +
 				"), 0) AS level2_badges_earned_count" +
 				", ifnull(SUM(" +
-				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 3 THEN 1 ELSE 0 END" +
+				"CASE WHEN b.`level` = 3 THEN 1 ELSE 0 END" +
 				"), 0) AS level3_badges_earned_count" +
 				", ifnull(SUM(" +
-				"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 4 THEN 1 ELSE 0 END" +
+				"CASE WHEN b.`level` = 4 THEN 1 ELSE 0 END" +
 				"), 0) AS level4_badges_earned_count " +
 				"FROM `user` bu " +
 				"LEFT JOIN egrowe_user_badge eb " +
@@ -211,6 +237,7 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 				"LEFT JOIN egrowe_badge b " +
 				"oN eb.egrowe_badge_id = b.id " +
 				"WHERE 1 " +
+				"AND b.sub_goal_type = 'level'" +
 				"AND eb.created_at BETWEEN " + startDate + " AND " + useEndDate + " " +
 				"AND bu.email = '" + line[emailColumnIndex] + "' ")
 			if err3 != nil {
@@ -267,16 +294,16 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 				results4, err4 := db.Query("SELECT ifnull(bu.email, ''), " +
 					"ifnull(count(eb.id), 0) as TotalBadgesEarned, " +
 					"ifnull(SUM(" +
-					"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 1 THEN 1 ELSE 0 END" +
+					"CASE WHEN b.`level` = 1 THEN 1 ELSE 0 END" +
 					"), 0) AS level1_badges_earned_count" +
 					", ifnull(SUM(" +
-					"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 2 THEN 1 ELSE 0 END" +
+					"CASE WHEN b.`level` = 2 THEN 1 ELSE 0 END" +
 					"), 0) AS level2_badges_earned_count" +
 					", ifnull(SUM(" +
-					"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 3 THEN 1 ELSE 0 END" +
+					"CASE WHEN b.`level` = 3 THEN 1 ELSE 0 END" +
 					"), 0) AS level3_badges_earned_count" +
 					", ifnull(SUM(" +
-					"CASE WHEN b.sub_goal_type = 'level' AND b.`level` = 4 THEN 1 ELSE 0 END" +
+					"CASE WHEN b.`level` = 4 THEN 1 ELSE 0 END" +
 					"), 0) AS level4_badges_earned_count " +
 					"FROM `user` bu " +
 					"LEFT JOIN egrowe_user_badge eb " +
@@ -284,6 +311,7 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 					"LEFT JOIN egrowe_badge b " +
 					"oN eb.egrowe_badge_id = b.id " +
 					"WHERE 1 " +
+					"AND b.sub_goal_type = 'level'" +
 					"AND eb.created_at BETWEEN " + startDateCumulative + " AND " + useEndDate + " " +
 					"AND bu.email = '" + line[emailColumnIndex] + "' ")
 				if err4 != nil {
@@ -319,7 +347,7 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 				var records2 []string
 				j := 0
 				test(j)
-				for i := 0; i < columnCount-1; i++ {
+				for i := 0; i < columnCount; i++ {
 					records2 = append(records2, line[i])
 					j = i
 				}
@@ -479,7 +507,7 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 				for results.Next() {
 					var records2 []string
 					j := 0
-					for i := 0; i < columnCount-1; i++ {
+					for i := 0; i < columnCount; i++ {
 						records2 = append(records2, line[i])
 						j = i
 					}
@@ -537,7 +565,7 @@ func enrichData(fileName string, startDate string, endDateTimeStampIndex int, em
 
 			var records2 []string
 			j := 0
-			for i := 0; i < columnCount-1; i++ {
+			for i := 0; i < columnCount; i++ {
 				records2 = append(records2, line[i])
 				j = i
 			}
