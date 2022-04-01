@@ -11,6 +11,7 @@ import (
 )
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
+import b "importqueries"
 
 type UserInfo struct {
 	email                  string `json:"name"`
@@ -65,6 +66,8 @@ func main() {
 	if (len(os.Args) > 6) {
 		timeOfYearColumnIndexStr = os.Args[6]
 	}
+
+
 
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {

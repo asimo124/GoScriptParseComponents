@@ -182,97 +182,19 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 
 		if i > 0 {
 
-			results3, err3 := db.Query("SELECT ifnull(bu.email, '') " +
-				", ifnull(count(eb.id), 0) as TotalBadgesEarned" +
-				", ifnull(SUM(" +
-				"CASE WHEN b.`level` = 1 THEN 1 ELSE 0 END" +
-				"), 0) AS level1_badges_earned_count" +
-				", ifnull(SUM(" +
-				"CASE WHEN b.`level` = 2 THEN 1 ELSE 0 END" +
-				"), 0) AS level2_badges_earned_count" +
-				", ifnull(SUM(" +
-				"CASE WHEN b.`level` = 3 THEN 1 ELSE 0 END" +
-				"), 0) AS level3_badges_earned_count" +
-				", ifnull(SUM(" +
-				"CASE WHEN b.`level` = 4 THEN 1 ELSE 0 END" +
-				"), 0) AS level4_badges_earned_count " +
-				"FROM `user` bu " +
-				"LEFT JOIN egrowe_user_badge eb " +
-				"ON eb.user_id = bu.id " +
-				"LEFT JOIN egrowe_badge b " +
-				"oN eb.egrowe_badge_id = b.id " +
-				"WHERE 1 " +
-				"AND b.sub_goal_type = 'level'" +
-				"AND eb.created_at BETWEEN " + startDate + " AND " + endDate + " " +
-				"AND bu.email = '" + line[emailColumnIndex] + "' ")
-			if err3 != nil {
-				fmt.Println("Error 3: " + err3.Error())
-			}
-			var userBadges UserBadges
-			for results3.Next() {
-				err3 = results3.Scan(&userBadges.email, &userBadges.TotalBadgesEarned,
-					&userBadges.level1_badges_earned_count, &userBadges.level2_badges_earned_count,
-					&userBadges.level3_badges_earned_count, &userBadges.level4_badges_earned_count)
-				if err3 != nil {
-					fmt.Println("err3: ", err3)
-				} else {
+			badgesItem := searchBadges(db, startDate, endDate, line[emailColumnIndex])
+			TotalBadgesEarned = badgesItem["TotalBadgesEarned"]
+			level1_badges_earned_count = badgesItem["level1_badges_earned_count"]
+			level2_badges_earned_count = badgesItem["level2_badges_earned_count"]
+			level3_badges_earned_count = badgesItem["level3_badges_earned_count"]
+			level4_badges_earned_count = badgesItem["level4_badges_earned_count"]
 
-					TotalBadgesEarned = userBadges.TotalBadgesEarned
-					level1_badges_earned_count = userBadges.level1_badges_earned_count
-					level2_badges_earned_count = userBadges.level2_badges_earned_count
-					level3_badges_earned_count = userBadges.level3_badges_earned_count
-					level4_badges_earned_count = userBadges.level4_badges_earned_count
-				}
-			}
-
-			/**
-			 * Query "Cumulative" Badges count
-			 */
-			if line[emailColumnIndex] != "" {
-
-				results4, err4 := db.Query("SELECT ifnull(bu.email, ''), " +
-					"ifnull(count(eb.id), 0) as TotalBadgesEarned, " +
-					"ifnull(SUM(" +
-					"CASE WHEN b.`level` = 1 THEN 1 ELSE 0 END" +
-					"), 0) AS level1_badges_earned_count" +
-					", ifnull(SUM(" +
-					"CASE WHEN b.`level` = 2 THEN 1 ELSE 0 END" +
-					"), 0) AS level2_badges_earned_count" +
-					", ifnull(SUM(" +
-					"CASE WHEN b.`level` = 3 THEN 1 ELSE 0 END" +
-					"), 0) AS level3_badges_earned_count" +
-					", ifnull(SUM(" +
-					"CASE WHEN b.`level` = 4 THEN 1 ELSE 0 END" +
-					"), 0) AS level4_badges_earned_count " +
-					"FROM `user` bu " +
-					"LEFT JOIN egrowe_user_badge eb " +
-					"ON eb.user_id = bu.id " +
-					"LEFT JOIN egrowe_badge b " +
-					"oN eb.egrowe_badge_id = b.id " +
-					"WHERE 1 " +
-					"AND b.sub_goal_type = 'level'" +
-					"AND eb.created_at BETWEEN " + startDateCumulative + " AND " + endDate + " " +
-					"AND bu.email = '" + line[emailColumnIndex] + "' ")
-				if err4 != nil {
-					fmt.Println("Error 3: " + err4.Error())
-				}
-				var userBadges4 UserBadges
-				for results4.Next() {
-					err4 = results4.Scan(&userBadges4.email, &userBadges4.TotalBadgesEarned,
-						&userBadges4.level1_badges_earned_count, &userBadges4.level2_badges_earned_count,
-						&userBadges4.level3_badges_earned_count, &userBadges4.level4_badges_earned_count)
-					if err4 != nil {
-						fmt.Println("err3: ", err4)
-					} else {
-
-						TotalBadgesEarnedCumulative = userBadges4.TotalBadgesEarned
-						level1_badges_earned_countCumulative = userBadges4.level1_badges_earned_count
-						level2_badges_earned_countCumulative = userBadges4.level2_badges_earned_count
-						level3_badges_earned_countCumulative = userBadges4.level3_badges_earned_count
-						level4_badges_earned_countCumulative = userBadges4.level4_badges_earned_count
-					}
-				}
-			}
+			badgesItemCumulative := searchBadges(db, startDateCumulative, endDate, line[emailColumnIndex])
+			TotalBadgesEarnedCumulative = badgesItemCumulative["TotalBadgesEarned"]
+			level1_badges_earned_countCumulative = badgesItemCumulative["level1_badges_earned_count"]
+			level2_badges_earned_countCumulative = badgesItemCumulative["level2_badges_earned_count"]
+			level3_badges_earned_countCumulative = badgesItemCumulative["level3_badges_earned_count"]
+			level4_badges_earned_countCumulative = badgesItemCumulative["level4_badges_earned_count"]
 		}
 
 		/**
@@ -322,66 +244,6 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 				csvwriter.Flush()
 
 			} else { // after first line
-
-				/*/
-				fmt.Println("QUERY 3 - USER INFO / TOUCHES " + "SELECT ifnull(u.email, '') as email, " +
-					"ifnull(COUNT(cl.id), 0) as TotalCoachingTouches, ifnull(u.id, 0) as user_id, " +
-					"ifnull(u.district_id, 0), ifnull(d.title, '') as 'district', ifnull(u.school_id, 0) as campus_id, " +
-					"ifnull(s.title, '') as campus, ifnull(up.first_name, '') as first_name, " +
-					"ifnull(up.last_name, '') as last_name, " +
-					"ifnull(CONCAT(up.first_name, ' ', up.last_name), '') as 'user', " +
-					"ifnull(CASE " +
-					"WHEN u.coachee_type = 'teacher' THEN 'Teacher' " +
-					"WHEN u.coachee_type = 'librarian' THEN 'Librarian' " +
-					"WHEN u.coachee_type = 'coach' THEN 'Coach' " +
-					"WHEN u.coachee_type = 'campus-admin' THEN 'Campus Admin' " +
-					"WHEN u.coachee_type = 'district-admin' " +
-					"THEN 'District Admin' ELSE u.coachee_type END, '') AS user_type, " +
-					"ifnull(up.title, '') as title, ifnull(u.last_login, 0), " +
-					"ifnull(uc.coach_id, 0) as 'assigned_coach_user_id', " +
-					"ifnull(CASE WHEN ( " +
-					"SELECT COUNT(cl.id) " +
-					"FROM egrowe_coachlog cl " +
-					"INNER JOIN egrowe_coachlog_attendee cla " +
-					"ON cl.id = cla.egrowe_coachlog_id " +
-					"AND cl.start_datetime BETWEEN " + startDate + " AND " + useEndDate + " " +
-					"INNER JOIN egrowe_coachlog_type clt " +
-					"ON cl.egrowe_coachlog_type_id = clt.id " +
-					"INNER JOIN `user` cu " +
-					"ON cl.user_id = cu.id " +
-					"WHERE 1 AND cl.is_deleted = 0 AND cl.is_practice = 0 AND cla.present = 1 AND clt.is_coaching = 1 " +
-					"AND cla.user_id = u.id AND cu.district_id = 2 " +
-					") > 0 THEN 'engage2learn' ELSE 'District' END, '') as coaching_source, " +
-					"ifnull(CONCAT(uccp.first_name, ' ', uccp.last_name), 0) as assigned_coach, " +
-					"IF(ucc.district_id = 2, 'engage2learn', " +
-					"if(ucc.district_id is null, 'Unassigned', 'District')) as coaching_assignment " +
-					"FROM `user` u " +
-					"LEFT JOIN `user_profile` up " +
-					"ON u.id = up.user_id " +
-					"LEFT JOIN `district` d " +
-					"ON u.district_id = d.id " +
-					"LEFT JOIN `school` s " +
-					"ON u.school_id = s.id " +
-					"LEFT JOIN `user_coach` uc " +
-					"ON u.id = uc.coachee_id " +
-					"AND uc.is_current = 1 " +
-					"LEFT JOIN `user` ucc " +
-					"ON uc.coach_id = ucc.id " +
-					"LEFT JOIN user_profile uccp " +
-					"ON ucc.id = uccp.user_id " +
-					"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
-					"ON u.id = cla1.user_id AND cla1.present = 1 " +
-					"LEFT JOIN egrowe_coachlog cl " +
-					"ON cla1.egrowe_coachlog_id = cl.id " +
-					"AND cl.is_practice = 0 " +
-					"AND cl.is_deleted = 0 " +
-					"LEFT JOIN egrowe_coachlog_type clt " +
-					"ON cl.egrowe_coachlog_type_id = clt.id " +
-					"AND clt.is_coaching = 1 " +
-					"WHERE 1 " +
-					"AND u.email = '" + line[emailColumnIndex] + "' ")
-				fmt.Println("")
-				//*/
 
 				results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
 					"ifnull(COUNT(cl.id), 0) as TotalCoachingTouches, ifnull(u.id, 0) as user_id, " +
@@ -523,4 +385,57 @@ func enrichData(fileName string, startDate string, endDate string, emailColumnIn
 	csvwriter.Flush()
 	csvFile.Close()
 	fmt.Println("Script completed")
+}
+
+func searchBadges(db *sql.DB, startDate string, endDate string, email string) map[string]int {
+
+	retVal := map[string]int{
+		"TotalBadgesEarned": 0,
+		"level1_badges_earned_count": 0,
+		"level2_badges_earned_count": 0,
+		"level3_badges_earned_count": 0,
+	}
+
+	results3, err3 := db.Query("SELECT ifnull(bu.email, '') " +
+		", ifnull(count(eb.id), 0) as TotalBadgesEarned" +
+		", ifnull(SUM(" +
+		"CASE WHEN b.`level` = 1 THEN 1 ELSE 0 END" +
+		"), 0) AS level1_badges_earned_count" +
+		", ifnull(SUM(" +
+		"CASE WHEN b.`level` = 2 THEN 1 ELSE 0 END" +
+		"), 0) AS level2_badges_earned_count" +
+		", ifnull(SUM(" +
+		"CASE WHEN b.`level` = 3 THEN 1 ELSE 0 END" +
+		"), 0) AS level3_badges_earned_count" +
+		", ifnull(SUM(" +
+		"CASE WHEN b.`level` = 4 THEN 1 ELSE 0 END" +
+		"), 0) AS level4_badges_earned_count " +
+		"FROM `user` bu " +
+		"LEFT JOIN egrowe_user_badge eb " +
+		"ON eb.user_id = bu.id " +
+		"LEFT JOIN egrowe_badge b " +
+		"oN eb.egrowe_badge_id = b.id " +
+		"WHERE 1 " +
+		"AND b.sub_goal_type = 'level'" +
+		"AND eb.created_at BETWEEN " + startDate + " AND " + endDate + " " +
+		"AND bu.email = '" + email + "' ")
+	if err3 != nil {
+		fmt.Println("Error 3: " + err3.Error())
+	}
+	var userBadges UserBadges
+	for results3.Next() {
+		err3 = results3.Scan(&userBadges.email, &userBadges.TotalBadgesEarned,
+			&userBadges.level1_badges_earned_count, &userBadges.level2_badges_earned_count,
+			&userBadges.level3_badges_earned_count, &userBadges.level4_badges_earned_count)
+		if err3 != nil {
+			fmt.Println("err3: ", err3)
+		} else {
+			retVal["TotalBadgesEarned"] = userBadges.TotalBadgesEarned
+			retVal["level1_badges_earned_count"] = userBadges.level1_badges_earned_count
+			retVal["level2_badges_earned_count"] = userBadges.level2_badges_earned_count
+			retVal["level3_badges_earned_count"] = userBadges.level3_badges_earned_count
+			retVal["level4_badges_earned_count"] = userBadges.level4_badges_earned_count
+		}
+	}
+	return retVal
 }
