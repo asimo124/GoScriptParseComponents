@@ -44,7 +44,7 @@ func main() {
 	if (len(os.Args) < 6) {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
-		fmt.Println("CORRECT Usage: enrichdata {fileName} {startDateStr} {boyEndDateStampIndex} {moyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
+		fmt.Println("CORRECT Usage: enrichdatav2_merged {fileName} {startDateStr} {boyEndDateStampIndex} {moyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
 		fmt.Println("")
 		fmt.Println("{fileName} - name of source file, which should be in /Users/alexhawley/Documents/tmp/go_enrich_data")
 		fmt.Println("{startDateStr} - start of date range - (YYYY-mm-dd)")
@@ -208,6 +208,9 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		value2 := convertStrToDateStandard(moyEndDateStr)
 		t2, _ := time.Parse(layout, value2)
 		moyEndDate := strconv.FormatInt(t2.Unix(), 10)
+
+		fmt.Println("boyEndDate: ", value)
+		fmt.Println("moyEndDate: ", value2)
 
 		/*/
 		moyEndDateInt64, err := strconv.ParseInt(moyEndDateStr, 10, 64)
