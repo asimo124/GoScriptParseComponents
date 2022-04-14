@@ -11,7 +11,6 @@ import (
 )
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
-import b "importqueries"
 
 type UserInfo struct {
 	email                  string `json:"name"`
@@ -114,7 +113,7 @@ func convertStrToDate(str string) string {
 func convertStrToDateStandard(str string) string {
 	strArr := strings.Split(str, "/")
 	if (len(strArr) > 2) {
-		year := strArr[2]
+		year := strArr[2][len(strArr[2])-2:]
 
 		month := strArr[0]
 		if len(month) == 1 {

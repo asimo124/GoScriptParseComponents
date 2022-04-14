@@ -41,7 +41,7 @@ type UserBadges struct {
 }
 
 func main() {
-	if (len(os.Args) < 6) {
+	if len(os.Args) < 6 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
 		fmt.Println("CORRECT Usage: enrichdatav2_merged {fileName} {startDateStr} {boyEndDateStampIndex} {moyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
@@ -64,7 +64,6 @@ func main() {
 	emailColumnIndexStr := os.Args[5]
 	columnCountStr := os.Args[6]
 
-
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1: " + err.Error())
@@ -82,24 +81,24 @@ func main() {
 		fmt.Print("Error 1.6: " + err.Error())
 		os.Exit(1)
 	}
-	boyEndDateTimeStampIndex:= int(boyEndDateTimeStampIndex64)
+	boyEndDateTimeStampIndex := int(boyEndDateTimeStampIndex64)
 
 	moyEndDateTimeStampIndex64, err := strconv.ParseInt(moyEndDateTimeStampIndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1.6: " + err.Error())
 		os.Exit(1)
 	}
-	moyEndDateTimeStampIndex:= int(moyEndDateTimeStampIndex64)
+	moyEndDateTimeStampIndex := int(moyEndDateTimeStampIndex64)
 
 	value := convertStrToDate(startDateStr)
 	t, _ := time.Parse(layout, value)
-	startDate:= strconv.FormatInt(t.Unix(), 10)
+	startDate := strconv.FormatInt(t.Unix(), 10)
 
 	enrichData(fileName, startDate, boyEndDateTimeStampIndex, moyEndDateTimeStampIndex, emailColumnIndex, columnCount)
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
-	if (len(strArr) > 2) {
+	if len(strArr) > 2 {
 		year := strArr[0][len(strArr[0])-2:]
 		return strArr[1] + "/" + strArr[2] + " 06:00:00AM '" + year + " -0600"
 	}
@@ -109,8 +108,8 @@ func convertStrToDate(str string) string {
 
 func convertStrToDateStandard(str string) string {
 	strArr := strings.Split(str, "/")
-	if (len(strArr) > 2) {
-		year := strArr[2]
+	if len(strArr) > 2 {
+		year := strArr[2][len(strArr[2])-2:]
 
 		month := strArr[0]
 		if len(month) == 1 {
@@ -210,19 +209,9 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		moyEndDate := strconv.FormatInt(t2.Unix(), 10)
 
 		fmt.Println("boyEndDate: ", value)
+		fmt.Println("boyEndDate stamp: ", boyEndDate)
 		fmt.Println("moyEndDate: ", value2)
-
-		/*/
-		moyEndDateInt64, err := strconv.ParseInt(moyEndDateStr, 10, 64)
-		if err != nil {
-			fmt.Print("Error 1.5: " + err.Error())
-			os.Exit(1)
-		}
-		moyEndDateInt := int(moyEndDateInt64)
-		if (moyEndDateInt <= startDateCumulativeInt) {
-			moyEndDateStr = "0"
-		}
-		//*/
+		fmt.Println("moyEndDate stamp: ", moyEndDate)
 
 		if i > 0 {
 
@@ -253,7 +242,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					"WHERE 1 " +
 					"AND b.sub_goal_type = 'level'" +
 					"AND eb.created_at BETWEEN " + startDate + " AND " + boyEndDate + " " +
-					"AND bu.email = '" + line[emailColumnIndex] + "' ")
+					"AND bu.email = '" + strings.Replace(line[emailColumnIndex], "'", "''", -1) + "' ")
 				if err3 != nil {
 					fmt.Println("Error 3: " + err3.Error())
 				}
@@ -300,7 +289,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					"WHERE 1 " +
 					"AND b.sub_goal_type = 'level'" +
 					"AND eb.created_at BETWEEN " + startDateCumulative + " AND " + boyEndDate + " " +
-					"AND bu.email = '" + line[emailColumnIndex] + "' ")
+					"AND bu.email = '" + strings.Replace(line[emailColumnIndex], "'", "''", -1) + "' ")
 				if err4 != nil {
 					fmt.Println("Error 3: " + err4.Error())
 				}
@@ -346,7 +335,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					"WHERE 1 " +
 					"AND b.sub_goal_type = 'level'" +
 					"AND eb.created_at BETWEEN " + startDate + " AND " + moyEndDate + " " +
-					"AND bu.email = '" + line[emailColumnIndex] + "' ")
+					"AND bu.email = '" + strings.Replace(line[emailColumnIndex], "'", "''", -1) + "' ")
 				if err6 != nil {
 					fmt.Println("Error 6: " + err6.Error())
 				}
@@ -392,7 +381,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					"WHERE 1 " +
 					"AND b.sub_goal_type = 'level'" +
 					"AND eb.created_at BETWEEN " + startDateCumulative + " AND " + moyEndDate + " " +
-					"AND bu.email = '" + line[emailColumnIndex] + "' ")
+					"AND bu.email = '" + strings.Replace(line[emailColumnIndex], "'", "''", -1) + "' ")
 				if err5 != nil {
 					fmt.Println("Error 3: " + err5.Error())
 				}
@@ -419,9 +408,9 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		 * Query all User Information as well as Coaching Touches - "Current Year"
 		 */
 
-		if line[emailColumnIndex] != "" {  // if email IS provided
+		if line[emailColumnIndex] != "" { // if email IS provided
 
-			if (i == 0) { // first line
+			if i == 0 { // first line
 
 				var records2 []string
 				j := 0
@@ -534,7 +523,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					"ON cl.egrowe_coachlog_type_id = clt.id " +
 					"AND clt.is_coaching = 1 " +
 					"WHERE 1 " +
-					"AND u.email = '" + line[emailColumnIndex] + "' ")
+					"AND u.email = '" + strings.Replace(line[emailColumnIndex], "'", "''", -1) + "' ")
 				if err != nil {
 					fmt.Print(err.Error())
 				}
@@ -553,7 +542,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 						&userInfo.user, &userInfo.user_type, &userInfo.title, &userInfo.last_login,
 						&userInfo.assigned_coach_user_id, &userInfo.coaching_source, &userInfo.assigned_coach,
 						&userInfo.coaching_assignment)
-					if err != nil {  // if NO records found
+					if err != nil { // if NO records found
 
 						fmt.Println("err: ", err)
 
@@ -562,7 +551,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 						}
 						_ = csvwriter.Write(records2)
 
-					} else {  // if find records
+					} else { // if find records
 
 						records2 = append(records2, userInfo.email)
 						records2 = append(records2, strconv.Itoa(userInfo.TotalCoachingTouches))
@@ -612,7 +601,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				}
 			}
 
-		 } else {  // if no email provided
+		} else { // if no email provided
 
 			var records2 []string
 			j := 0
