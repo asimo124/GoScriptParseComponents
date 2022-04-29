@@ -14,7 +14,7 @@ import _ "github.com/go-sql-driver/mysql"
 
 type UserInfo struct {
 	email                  string `json:"name"`
-	TotalCoachingTouches   int    `json:"id"`
+	TotalCumulativeLogs    int    `json:"id"`
 	user_id                int    `json:"id"`
 	district_id            int    `json:"id"`
 	district               string `json:"name"`
@@ -31,6 +31,14 @@ type UserInfo struct {
 	assigned_coach         string `json:"name"`
 	coaching_assignment    string `json:"name"`
 }
+
+type UserInfoCurrentYear struct {
+	email                string `json:"name"`
+	TotalCurrentYearLogs int    `json:"id"`
+	user_id              int    `json:"id"`
+	coaching_source      string `json:"name"`
+}
+
 type UserBadges struct {
 	email                      string `json:"name"`
 	TotalBadgesEarned          int    `json:"id"`
@@ -41,7 +49,7 @@ type UserBadges struct {
 }
 
 func main() {
-	if (len(os.Args) < 4) {
+	if len(os.Args) < 4 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
 		fmt.Println("CORRECT Usage: enrichdatav2_teacher_retention {fileName} {emailColumnIndex} {schoolYearIndex} {columnCountIndex}")
@@ -58,7 +66,6 @@ func main() {
 	emailColumnIndexStr := os.Args[2]
 	schoolYearColumnIndexStr := os.Args[3]
 	columnCountStr := os.Args[4]
-
 
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {
@@ -83,7 +90,7 @@ func main() {
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
-	if (len(strArr) > 2) {
+	if len(strArr) > 2 {
 		year := strArr[0][len(strArr[0])-2:]
 		return strArr[1] + "/" + strArr[2] + " 06:00:00AM '" + year + " -0600"
 	}
@@ -93,7 +100,7 @@ func convertStrToDate(str string) string {
 
 func convertStrToDateStandard(str string) string {
 	strArr := strings.Split(str, "/")
-	if (len(strArr) > 2) {
+	if len(strArr) > 2 {
 		year := strArr[2][len(strArr[2])-2:]
 
 		month := strArr[0]
@@ -128,29 +135,29 @@ func getDateRangeFromSchoolYear(schoolYear string, cumulative bool) string {
 	startDate := "0"
 	endDate := "0"
 	switch schoolYear {
-		case "2016-2017":
-			startDate = getTimeStampStringFromDateString("2016-06-01")
-			endDate = getTimeStampStringFromDateString("2017-05-31")
-		case "2017-2018":
-			startDate = getTimeStampStringFromDateString("2017-06-01")
-			endDate = getTimeStampStringFromDateString("2018-05-31")
-		case "2018-2019":
-			startDate = getTimeStampStringFromDateString("2018-06-01")
-			endDate = getTimeStampStringFromDateString("2019-05-31")
-		case "2019-2020":
-			startDate = getTimeStampStringFromDateString("2019-06-01")
-			endDate = getTimeStampStringFromDateString("2020-05-31")
-		case "2020-2021":
-			startDate = getTimeStampStringFromDateString("2020-06-01")
-			endDate = getTimeStampStringFromDateString("2021-06-30")
-		case "2021-2022":
-			startDate = getTimeStampStringFromDateString("2021-07-01")
-			endDate = getTimeStampStringFromDateString("2022-06-30")
-		default:
-			startDate = "0"
-			endDate = "0"
+	case "2016-2017":
+		startDate = getTimeStampStringFromDateString("2016-06-01")
+		endDate = getTimeStampStringFromDateString("2017-05-31")
+	case "2017-2018":
+		startDate = getTimeStampStringFromDateString("2017-06-01")
+		endDate = getTimeStampStringFromDateString("2018-05-31")
+	case "2018-2019":
+		startDate = getTimeStampStringFromDateString("2018-06-01")
+		endDate = getTimeStampStringFromDateString("2019-05-31")
+	case "2019-2020":
+		startDate = getTimeStampStringFromDateString("2019-06-01")
+		endDate = getTimeStampStringFromDateString("2020-05-31")
+	case "2020-2021":
+		startDate = getTimeStampStringFromDateString("2020-06-01")
+		endDate = getTimeStampStringFromDateString("2021-06-30")
+	case "2021-2022":
+		startDate = getTimeStampStringFromDateString("2021-07-01")
+		endDate = getTimeStampStringFromDateString("2022-06-30")
+	default:
+		startDate = "0"
+		endDate = "0"
 	}
-	if (cumulative == true) {
+	if cumulative == true {
 		startDate = "0"
 	}
 	return startDate + "~" + endDate
@@ -230,9 +237,9 @@ func enrichData(fileName string, emailColumnIndex int64, schoolYearColumnIndex i
 		 * Query all User Information as well as Coaching Touches - "Current Year"
 		 */
 
-		if line[emailColumnIndex] != "" {  // if email IS provided
+		if line[emailColumnIndex] != "" { // if email IS provided
 
-			if (i == 0) { // first line
+			if i == 0 { // first line
 
 				var records2 []string
 				j := 0
@@ -243,7 +250,11 @@ func enrichData(fileName string, emailColumnIndex int64, schoolYearColumnIndex i
 				}
 
 				records2 = append(records2, "email")
-				records2 = append(records2, "total_coaching_touches")
+				records2 = append(records2, "total_current_year_coaching_conversations")
+				records2 = append(records2, "total_current_year_coaching_logs")
+				records2 = append(records2, "total_cumulative_coaching_conversations")
+				records2 = append(records2, "total_cumulative_coaching_logs")
+
 				records2 = append(records2, "user_id")
 				records2 = append(records2, "district_id")
 				records2 = append(records2, "distrrict")
@@ -278,127 +289,101 @@ func enrichData(fileName string, emailColumnIndex int64, schoolYearColumnIndex i
 
 			} else { // after first line
 
-				results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
-					"ifnull(COUNT(cl.id), 0) as TotalCoachingTouches, ifnull(u.id, 0) as user_id, " +
-					"ifnull(u.district_id, 0), ifnull(d.title, '') as 'district', ifnull(u.school_id, 0) as campus_id, " +
-					"ifnull(s.title, '') as campus, ifnull(up.first_name, '') as first_name, " +
-					"ifnull(up.last_name, '') as last_name, " +
-					"ifnull(CONCAT(up.first_name, ' ', up.last_name), '') as 'user', " +
-					"ifnull(CASE " +
-					"WHEN u.coachee_type = 'teacher' THEN 'Teacher' " +
-					"WHEN u.coachee_type = 'librarian' THEN 'Librarian' " +
-					"WHEN u.coachee_type = 'coach' THEN 'Coach' " +
-					"WHEN u.coachee_type = 'campus-admin' THEN 'Campus Admin' " +
-					"WHEN u.coachee_type = 'district-admin' " +
-					"THEN 'District Admin' ELSE u.coachee_type END, '') AS user_type, " +
-					"ifnull(up.title, '') as title, ifnull(u.last_login, 0), " +
-					"ifnull(uc.coach_id, 0) as 'assigned_coach_user_id', " +
-					"ifnull(CASE WHEN ( " +
-					"SELECT COUNT(cl.id) " +
-					"FROM egrowe_coachlog cl " +
-					"INNER JOIN egrowe_coachlog_attendee cla " +
-					"ON cl.id = cla.egrowe_coachlog_id " +
-					"AND cl.start_datetime BETWEEN " + startDate + " AND " + endDate + " " +
-					"INNER JOIN egrowe_coachlog_type clt " +
-					"ON cl.egrowe_coachlog_type_id = clt.id " +
-					"INNER JOIN `user` cu " +
-					"ON cl.user_id = cu.id " +
-					"WHERE 1 AND cl.is_deleted = 0 AND cl.is_practice = 0 AND cla.present = 1 AND clt.is_coaching = 1 " +
-					"AND cla.user_id = u.id AND cu.district_id = 2 " +
-					") > 0 THEN 'engage2learn' ELSE 'District' END, '') as coaching_source, " +
-					"ifnull(CONCAT(uccp.first_name, ' ', uccp.last_name), 0) as assigned_coach, " +
-					"IF(ucc.district_id = 2, 'engage2learn', " +
-					"if(ucc.district_id is null, 'Unassigned', 'District')) as coaching_assignment " +
-					"FROM `user` u " +
-					"LEFT JOIN `user_profile` up " +
-					"ON u.id = up.user_id " +
-					"LEFT JOIN `district` d " +
-					"ON u.district_id = d.id " +
-					"LEFT JOIN `school` s " +
-					"ON u.school_id = s.id " +
-					"LEFT JOIN `user_coach` uc " +
-					"ON u.id = uc.coachee_id " +
-					"AND uc.is_current = 1 " +
-					"LEFT JOIN `user` ucc " +
-					"ON uc.coach_id = ucc.id " +
-					"LEFT JOIN user_profile uccp " +
-					"ON ucc.id = uccp.user_id " +
-					"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
-					"ON u.id = cla1.user_id AND cla1.present = 1 " +
-					"LEFT JOIN egrowe_coachlog cl " +
-					"ON cla1.egrowe_coachlog_id = cl.id " +
-					"AND cl.is_practice = 0 " +
-					"AND cl.is_deleted = 0 " +
-					"LEFT JOIN egrowe_coachlog_type clt " +
-					"ON cl.egrowe_coachlog_type_id = clt.id " +
-					"AND clt.is_coaching = 1 " +
-					"WHERE 1 " +
-					"AND u.email = '" + line[emailColumnIndex] + "' ")
-				if err != nil {
-					fmt.Print(err.Error())
+				var records2 []string
+				j := 0
+				for i := 0; i < columnCount; i++ {
+					records2 = append(records2, line[i])
+					j = i
 				}
-				var userInfo UserInfo
-				for results.Next() {
-					var records2 []string
-					j := 0
-					for i := 0; i < columnCount; i++ {
-						records2 = append(records2, line[i])
-						j = i
+				test(j)
+
+				/**
+				 * Get User Info (and Total Cumulative Coaching Logs)
+				 */
+				var userInfo = searchCumulativeYearLogs(db, endDate, line[emailColumnIndex], false)
+				if (userInfo == UserInfo{}) { // record found
+
+					for i := j; i < 23; i++ {
+						records2 = append(records2, "")
 					}
-					test(j)
+					_ = csvwriter.Write(records2)
 
-					err = results.Scan(&userInfo.email, &userInfo.TotalCoachingTouches, &userInfo.user_id, &userInfo.district_id,
-						&userInfo.district, &userInfo.campus_id, &userInfo.campus, &userInfo.first_name, &userInfo.last_name,
-						&userInfo.user, &userInfo.user_type, &userInfo.title, &userInfo.last_login,
-						&userInfo.assigned_coach_user_id, &userInfo.coaching_source, &userInfo.assigned_coach,
-						&userInfo.coaching_assignment)
-					if err != nil {  // if NO records found
+				} else {
 
-						fmt.Println("err: ", err)
+					records2 = append(records2, userInfo.email)
 
-						for i := j; i < 23; i++ {
-							records2 = append(records2, "")
-						}
-						_ = csvwriter.Write(records2)
-
-					} else {  // if find records
-
-						records2 = append(records2, userInfo.email)
-						records2 = append(records2, strconv.Itoa(userInfo.TotalCoachingTouches))
-						records2 = append(records2, strconv.Itoa(userInfo.user_id))
-						records2 = append(records2, strconv.Itoa(userInfo.district_id))
-						records2 = append(records2, userInfo.district)
-						records2 = append(records2, strconv.Itoa(userInfo.campus_id))
-						records2 = append(records2, userInfo.campus)
-						records2 = append(records2, userInfo.first_name)
-						records2 = append(records2, userInfo.last_name)
-						records2 = append(records2, userInfo.user)
-						records2 = append(records2, userInfo.user_type)
-						records2 = append(records2, userInfo.title)
-						records2 = append(records2, strconv.Itoa(userInfo.last_login))
-						records2 = append(records2, strconv.Itoa(userInfo.assigned_coach_user_id))
-						records2 = append(records2, userInfo.coaching_source)
-						records2 = append(records2, userInfo.assigned_coach)
-						records2 = append(records2, userInfo.coaching_assignment)
-
-						// BOY - Current Year
-						records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoy))
-						records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoy))
-						records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoy))
-						records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoy))
-						records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoy))
-						// BOY - Cumulative
-						records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoyCumulative))
-						records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoyCumulative))
-						records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoyCumulative))
-						records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoyCumulative))
-						records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoyCumulative))
-						_ = csvwriter.Write(records2)
+					/**
+					 * Get Total Cumulative Coaching Conversations
+					 */
+					totalCumulativeCoachingConversations := 0
+					var userInfoConversations = searchCumulativeYearLogs(db, endDate, line[emailColumnIndex], true)
+					if (userInfoConversations != UserInfo{}) { // record found
+						totalCumulativeCoachingConversations = userInfoConversations.TotalCumulativeLogs
 					}
+
+					/**
+					 * Get Total Current Year Conversations
+					 */
+					totalCurrentYearCoachingConversations := 0
+					test(totalCurrentYearCoachingConversations)
+					var userInfoCurrentYearConversations = searchCurrentYearLogs(db, startDate, endDate, line[emailColumnIndex], true)
+					if (userInfoCurrentYearConversations != UserInfoCurrentYear{}) { // record found
+						totalCurrentYearCoachingConversations = userInfoCurrentYearConversations.TotalCurrentYearLogs
+					}
+					records2 = append(records2, strconv.Itoa(totalCurrentYearCoachingConversations))
+
+					/**
+					 * Get Total Current Year Coaching Logs
+					 */
+					totalCurrentYearCoachingLogs := 0
+					test(totalCurrentYearCoachingLogs)
+					var userInfoCurrentYearLogs = searchCurrentYearLogs(db, startDate, endDate, line[emailColumnIndex], false)
+					fmt.Println("userInfoCurrentYearLogs: ", userInfoCurrentYearLogs)
+					if (userInfoCurrentYearLogs != UserInfoCurrentYear{}) { // record found
+						totalCurrentYearCoachingLogs = userInfoCurrentYearLogs.TotalCurrentYearLogs
+					}
+					records2 = append(records2, strconv.Itoa(totalCurrentYearCoachingLogs))
+
+					// Cumulative Coaching Conversations
+					records2 = append(records2, strconv.Itoa(totalCumulativeCoachingConversations))
+					// Cumulative Coaching Logs
+					records2 = append(records2, strconv.Itoa(userInfo.TotalCumulativeLogs))
+
+					records2 = append(records2, strconv.Itoa(userInfo.user_id))
+					records2 = append(records2, strconv.Itoa(userInfo.district_id))
+					records2 = append(records2, userInfo.district)
+					records2 = append(records2, strconv.Itoa(userInfo.campus_id))
+					records2 = append(records2, userInfo.campus)
+					records2 = append(records2, userInfo.first_name)
+					records2 = append(records2, userInfo.last_name)
+					records2 = append(records2, userInfo.user)
+					records2 = append(records2, userInfo.user_type)
+					records2 = append(records2, userInfo.title)
+					records2 = append(records2, strconv.Itoa(userInfo.last_login))
+					records2 = append(records2, strconv.Itoa(userInfo.assigned_coach_user_id))
+					records2 = append(records2, userInfo.coaching_source)
+					records2 = append(records2, userInfo.assigned_coach)
+					records2 = append(records2, userInfo.coaching_assignment)
+
+					// BOY - Current Year
+					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoy))
+					records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoy))
+					// BOY - Cumulative
+					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoyCumulative))
+
+					_ = csvwriter.Write(records2)
+
 				}
 			}
 
-		 } else {  // if no email provided
+		} else { // if no email provided
 
 			var records2 []string
 			j := 0
@@ -426,7 +411,7 @@ func enrichData(fileName string, emailColumnIndex int64, schoolYearColumnIndex i
 func searchBadges(db *sql.DB, startDate string, endDate string, email string) map[string]int {
 
 	retVal := map[string]int{
-		"TotalBadgesEarned": 0,
+		"TotalBadgesEarned":          0,
 		"level1_badges_earned_count": 0,
 		"level2_badges_earned_count": 0,
 		"level3_badges_earned_count": 0,
@@ -448,9 +433,9 @@ func searchBadges(db *sql.DB, startDate string, endDate string, email string) ma
 		"), 0) AS level4_badges_earned_count " +
 		"FROM `user` bu " +
 		"LEFT JOIN egrowe_user_badge eb " +
-		"ON eb.user_id = bu.id " +
+		"	ON eb.user_id = bu.id " +
 		"LEFT JOIN egrowe_badge b " +
-		"oN eb.egrowe_badge_id = b.id " +
+		"	oN eb.egrowe_badge_id = b.id " +
 		"WHERE 1 " +
 		"AND b.sub_goal_type = 'level'" +
 		"AND eb.created_at BETWEEN " + startDate + " AND " + endDate + " " +
@@ -474,4 +459,117 @@ func searchBadges(db *sql.DB, startDate string, endDate string, email string) ma
 		}
 	}
 	return retVal
+}
+
+func searchCumulativeYearLogs(db *sql.DB, endDate string, email string, filterCoachingConversations bool) UserInfo {
+
+	whereSql := ""
+	if filterCoachingConversations {
+		whereSql += "AND clt.is_coaching = 1 "
+	}
+
+	results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
+		"ifnull(COUNT(cl.id), 0) as TotalCumulativeLogs, ifnull(u.id, 0) as user_id, " +
+		"ifnull(u.district_id, 0), ifnull(d.title, '') as 'district', ifnull(u.school_id, 0) as campus_id, " +
+		"ifnull(s.title, '') as campus, ifnull(up.first_name, '') as first_name, " +
+		"ifnull(up.last_name, '') as last_name, " +
+		"ifnull(CONCAT(up.first_name, ' ', up.last_name), '') as 'user', " +
+		"ifnull(CASE " +
+		"		WHEN u.coachee_type = 'teacher' THEN 'Teacher' " +
+		"		WHEN u.coachee_type = 'librarian' THEN 'Librarian' " +
+		"		WHEN u.coachee_type = 'coach' THEN 'Coach' " +
+		"		WHEN u.coachee_type = 'campus-admin' THEN 'Campus Admin' " +
+		"		WHEN u.coachee_type = 'district-admin' " +
+		"		THEN 'District Admin' ELSE u.coachee_type END, '') AS user_type, " +
+		"ifnull(up.title, '') as title, ifnull(u.last_login, 0), " +
+		"ifnull(uc.coach_id, 0) as 'assigned_coach_user_id', " +
+		"'' as coaching_source, " +
+		"ifnull(CONCAT(uccp.first_name, ' ', uccp.last_name), 0) as assigned_coach, " +
+		"IF(ucc.district_id = 2, 'engage2learn', " +
+		"if(ucc.district_id is null, 'Unassigned', 'District')) as coaching_assignment " +
+		"FROM `user` u " +
+		"INNER JOIN `user_profile` up " +
+		"	ON u.id = up.user_id " +
+		"INNER JOIN `district` d " +
+		"	ON u.district_id = d.id " +
+		"INNER JOIN `school` s " +
+		"	ON u.school_id = s.id " +
+		"LEFT JOIN `user_coach` uc " +
+		"	ON u.id = uc.coachee_id " +
+		"	AND uc.is_current = 1 " +
+		"LEFT JOIN `user` ucc " +
+		"	ON uc.coach_id = ucc.id " +
+		"LEFT JOIN user_profile uccp " +
+		"	ON ucc.id = uccp.user_id " +
+		"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
+		"	ON u.id = cla1.user_id AND cla1.present = 1 " +
+		"LEFT JOIN egrowe_coachlog cl " +
+		"	ON cla1.egrowe_coachlog_id = cl.id " +
+		"	AND cl.is_practice = 0 " +
+		"	AND cl.is_deleted = 0 " +
+		"	AND cl.start_datetime BETWEEN 0 AND " + endDate + " " +
+		"LEFT JOIN egrowe_coachlog_type clt " +
+		"	ON cl.egrowe_coachlog_type_id = clt.id " +
+		"WHERE 1 " +
+		whereSql +
+		"AND u.email = '" + email + "' ")
+
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	var userInfo UserInfo
+	for results.Next() {
+		err = results.Scan(&userInfo.email, &userInfo.TotalCumulativeLogs, &userInfo.user_id, &userInfo.district_id,
+			&userInfo.district, &userInfo.campus_id, &userInfo.campus, &userInfo.first_name, &userInfo.last_name,
+			&userInfo.user, &userInfo.user_type, &userInfo.title, &userInfo.last_login,
+			&userInfo.assigned_coach_user_id, &userInfo.coaching_source, &userInfo.assigned_coach,
+			&userInfo.coaching_assignment)
+	}
+	return userInfo
+}
+
+func searchCurrentYearLogs(db *sql.DB, startDate string, endDate string, email string, filterCoachingConversations bool) UserInfoCurrentYear {
+
+	fmt.Println("startDate: " + startDate)
+	fmt.Println("endDate: " + endDate)
+
+	whereSql := ""
+	if filterCoachingConversations {
+		whereSql += "AND clt.is_coaching = 1 "
+	}
+
+	results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
+		"ifnull(COUNT(cl.id), 0) as TotalCurrentYearLogs, ifnull(u.id, 0) as user_id, " +
+		"CASE WHEN cu.district_id IS NULL THEN " +
+		"	'Not Coached' " +
+		"ELSE " +
+		"	CASE WHEN cu.district_id = 2 THEN " +
+		"		'engage2learn' " +
+		"	ELSE " +
+		"		'district' " +
+		"	END " +
+		"END as coaching_source " +
+		"FROM `user` u " +
+		"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
+		"	ON u.id = cla1.user_id AND cla1.present = 1 " +
+		"LEFT JOIN egrowe_coachlog cl " +
+		"	ON cla1.egrowe_coachlog_id = cl.id " +
+		"	AND cl.is_practice = 0 " +
+		"	AND cl.is_deleted = 0 " +
+		"LEFT JOIN egrowe_coachlog_type clt " +
+		"	ON cl.egrowe_coachlog_type_id = clt.id " +
+		"LEFT JOIN `user` cu " +
+		"	ON cl.user_id = cu.id " +
+		"WHERE 1 " +
+		whereSql + " " +
+		"AND u.email = '" + email + "' " +
+		"AND cl.start_datetime BETWEEN " + startDate + " AND " + endDate + " ")
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	var userInfoCurrentYear UserInfoCurrentYear
+	for results.Next() {
+		err = results.Scan(&userInfoCurrentYear.email, &userInfoCurrentYear.TotalCurrentYearLogs, &userInfoCurrentYear.user_id, &userInfoCurrentYear.coaching_source)
+	}
+	return userInfoCurrentYear
 }
