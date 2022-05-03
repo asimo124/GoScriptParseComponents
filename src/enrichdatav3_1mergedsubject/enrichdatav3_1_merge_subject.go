@@ -425,7 +425,6 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 				records2 = append(records2, "coaching_source")
 				records2 = append(records2, "assigned_coach")
 				records2 = append(records2, "coaching_assignment")
-
 				/**
 				 * BOY
 				 */
