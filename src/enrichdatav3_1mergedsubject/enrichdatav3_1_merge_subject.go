@@ -748,7 +748,32 @@ func searchCurrentYearLogs(db *sql.DB, startDate string, endDate string, email s
 		whereSql += "AND clt.is_coaching = 1 "
 	}
 
-	results, err := db.Query("  ")
+	results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
+		"ifnull(COUNT(cl.id), 0) as TotalCurrentYearLogs, ifnull(u.id, 0) as user_id, " +
+		"CASE WHEN cu.district_id IS NULL THEN " +
+		"	'Not Coached' " +
+		"ELSE " +
+		"	CASE WHEN cu.district_id = 2 THEN " +
+		"		'engage2learn' " +
+		"	ELSE " +
+		"		'district' " +
+		"	END " +
+		"END as coaching_source " +
+		"FROM `user` u " +
+		"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
+		"	ON u.id = cla1.user_id AND cla1.present = 1 " +
+		"LEFT JOIN egrowe_coachlog cl " +
+		"	ON cla1.egrowe_coachlog_id = cl.id " +
+		"	AND cl.is_practice = 0 " +
+		"	AND cl.is_deleted = 0 " +
+		"LEFT JOIN egrowe_coachlog_type clt " +
+		"	ON cl.egrowe_coachlog_type_id = clt.id " +
+		"LEFT JOIN `user` cu " +
+		"	ON cl.user_id = cu.id " +
+		"WHERE 1 " +
+		whereSql + " " +
+		"AND u.email = '" + email + "' " +
+		"AND cl.start_datetime BETWEEN " + startDate + " AND " + endDate + " ")
 	if err != nil {
 		fmt.Print(err.Error())
 	}

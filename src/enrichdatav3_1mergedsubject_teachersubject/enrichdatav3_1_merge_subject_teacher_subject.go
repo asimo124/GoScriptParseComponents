@@ -344,7 +344,7 @@ func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
 				testBadge(badgesItemBoy)
 				testBadge(badgesItemBoyCumulative)
 
-				if (moyEndDate != "0" && !strings.Contains(moyEndDate, "-")) {
+				if moyEndDate != "0" && !strings.Contains(moyEndDate, "-") {
 
 					/**
 					 * MOY
@@ -371,83 +371,92 @@ func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
 			}
 		}
 
-		if email != "" { // if email IS provided
+		if i == 0 { // first line
 
-			if i == 0 { // first line
+			var records2 []string
+			j := 0
+			test(j)
+			for i := 0; i < columnCount; i++ {
+				records2 = append(records2, line[i])
+				j = i
+			}
 
-				var records2 []string
-				j := 0
-				test(j)
-				for i := 0; i < columnCount; i++ {
-					records2 = append(records2, line[i])
-					j = i
-				}
+			records2 = append(records2, "email")
+			records2 = append(records2, "total_current_year_coaching_conversations")
+			records2 = append(records2, "total_current_year_coaching_logs")
+			records2 = append(records2, "total_cumulative_coaching_conversations")
+			records2 = append(records2, "total_cumulative_coaching_logs")
 
-				records2 = append(records2, "email")
-				records2 = append(records2, "total_current_year_coaching_conversations")
-				records2 = append(records2, "total_current_year_coaching_logs")
-				records2 = append(records2, "total_cumulative_coaching_conversations")
-				records2 = append(records2, "total_cumulative_coaching_logs")
+			records2 = append(records2, "user_id")
+			records2 = append(records2, "district_id")
+			records2 = append(records2, "distrrict")
+			records2 = append(records2, "campus_id")
+			records2 = append(records2, "campus")
+			records2 = append(records2, "first_name")
+			records2 = append(records2, "last_name")
+			records2 = append(records2, "user")
+			records2 = append(records2, "user_type")
+			records2 = append(records2, "title")
+			records2 = append(records2, "last_login")
+			records2 = append(records2, "assigned_coach_user_id")
+			records2 = append(records2, "coaching_source")
+			records2 = append(records2, "assigned_coach")
+			records2 = append(records2, "coaching_assignment")
+			/**
+			 * BOY
+			 */
+			// current year
+			records2 = append(records2, "total_badges_earned_boy_current_year")
+			records2 = append(records2, "level1_badges_earned_count_boy_current_year")
+			records2 = append(records2, "level2_badges_earned_count_boy_current_year")
+			records2 = append(records2, "level3_badges_earned_count_boy_current_year")
+			records2 = append(records2, "level4_badges_earned_count_boy_current_year")
+			// cumulative
+			records2 = append(records2, "total_badges_earned_boy_cumulative")
+			records2 = append(records2, "level1_badges_earned_count_boy_cumulative")
+			records2 = append(records2, "level2_badges_earned_count_boy_cumulative")
+			records2 = append(records2, "level3_badges_earned_count_boy_cumulative")
+			records2 = append(records2, "level4_badges_earned_count_boy_cumulative")
 
-				records2 = append(records2, "user_id")
-				records2 = append(records2, "district_id")
-				records2 = append(records2, "distrrict")
-				records2 = append(records2, "campus_id")
-				records2 = append(records2, "campus")
-				records2 = append(records2, "first_name")
-				records2 = append(records2, "last_name")
-				records2 = append(records2, "user")
-				records2 = append(records2, "user_type")
-				records2 = append(records2, "title")
-				records2 = append(records2, "last_login")
-				records2 = append(records2, "assigned_coach_user_id")
-				records2 = append(records2, "coaching_source")
-				records2 = append(records2, "assigned_coach")
-				records2 = append(records2, "coaching_assignment")
-				/**
-				 * BOY
-				 */
-				// current year
-				records2 = append(records2, "total_badges_earned_boy_current_year")
-				records2 = append(records2, "level1_badges_earned_count_boy_current_year")
-				records2 = append(records2, "level2_badges_earned_count_boy_current_year")
-				records2 = append(records2, "level3_badges_earned_count_boy_current_year")
-				records2 = append(records2, "level4_badges_earned_count_boy_current_year")
-				// cumulative
-				records2 = append(records2, "total_badges_earned_boy_cumulative")
-				records2 = append(records2, "level1_badges_earned_count_boy_cumulative")
-				records2 = append(records2, "level2_badges_earned_count_boy_cumulative")
-				records2 = append(records2, "level3_badges_earned_count_boy_cumulative")
-				records2 = append(records2, "level4_badges_earned_count_boy_cumulative")
+			/**
+			 * MOY
+			 */
+			// current year
+			records2 = append(records2, "total_badges_earned_moy_current_year")
+			records2 = append(records2, "level1_badges_earned_count_moy_current_year")
+			records2 = append(records2, "level2_badges_earned_count_moy_current_year")
+			records2 = append(records2, "level3_badges_earned_count_moy_current_year")
+			records2 = append(records2, "level4_badges_earned_count_moy_current_year")
+			// cumulative
+			records2 = append(records2, "total_badges_earned_moy_cumulative")
+			records2 = append(records2, "level1_badges_earned_count_moy_cumulative")
+			records2 = append(records2, "level2_badges_earned_count_moy_cumulative")
+			records2 = append(records2, "level3_badges_earned_count_moy_cumulative")
+			records2 = append(records2, "level4_badges_earned_count_moy_cumulative")
 
-				/**
-				 * MOY
-				 */
-				// current year
-				records2 = append(records2, "total_badges_earned_moy_current_year")
-				records2 = append(records2, "level1_badges_earned_count_moy_current_year")
-				records2 = append(records2, "level2_badges_earned_count_moy_current_year")
-				records2 = append(records2, "level3_badges_earned_count_moy_current_year")
-				records2 = append(records2, "level4_badges_earned_count_moy_current_year")
-				// cumulative
-				records2 = append(records2, "total_badges_earned_moy_cumulative")
-				records2 = append(records2, "level1_badges_earned_count_moy_cumulative")
-				records2 = append(records2, "level2_badges_earned_count_moy_cumulative")
-				records2 = append(records2, "level3_badges_earned_count_moy_cumulative")
-				records2 = append(records2, "level4_badges_earned_count_moy_cumulative")
+			_ = csvwriter.Write(records2)
+			csvwriter.Flush()
 
-				_ = csvwriter.Write(records2)
-				csvwriter.Flush()
+		} else { // after first line
 
-			} else { // after first line
+			boyEndDate := getTimeStampStringFromDateString(line[boyEndDateColumnIndex], true)
+			moyEndDate := getTimeStampStringFromDateString(line[moyEndDateColumnIndex], true)
 
-				boyEndDate := getTimeStampStringFromDateString(line[boyEndDateColumnIndex], true)
-				moyEndDate := getTimeStampStringFromDateString(line[moyEndDateColumnIndex], true)
-				useDate := moyEndDate
+			subject := line[subjectColumnIndex]
+			if subject == "Language Arts" {
+				email = line[readingEmailColumnIndex]
+			} else if subject == "Mathematics" {
+				email = line[mathEmailColumnIndex]
+			} else if subject == "Science" {
+				email = line[scienceEmailColumnIndex]
+			}
 
-				if moyEndDate == "0" || strings.Contains(moyEndDate, "-") {
-					useDate = boyEndDate
-				}
+			useDate := boyEndDate
+			if moyEndDate == "0" || strings.Contains(moyEndDate, "-") {
+				useDate = boyEndDate
+			}
+
+			if email != "" { // if email IS provided
 
 				subject := line[subjectColumnIndex]
 				if subject == "Language Arts" {
@@ -457,11 +466,7 @@ func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
 				} else if subject == "Science" {
 					email = line[scienceEmailColumnIndex]
 				}
-
-				fmt.Println("boyEndDate: " + boyEndDate)
-				fmt.Println("subject: " + subject)
-				fmt.Println("email: " + email)
-
+				
 				var records2 []string
 				j := 0
 				for i := 0; i < columnCount; i++ {
@@ -474,7 +479,7 @@ func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
 				 * Get User Info (and Total Cumulative Coaching Logs)
 				 */
 				var userInfo = searchCumulativeYearLogs(db, useDate, email, false)
-				if (userInfo == UserInfo{}) { // record found
+				if (userInfo == UserInfo{}) { // no record found
 
 					for i := j; i < 23; i++ {
 						records2 = append(records2, "")
@@ -567,21 +572,20 @@ func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
 					_ = csvwriter.Write(records2)
 
 				}
-			}
+			} else { // if no email provided
 
-		} else { // if no email provided
-
-			var records2 []string
-			j := 0
-			for i := 0; i < columnCount; i++ {
-				records2 = append(records2, line[i])
-				j = i
+				var records2 []string
+				j := 0
+				for i := 0; i < columnCount; i++ {
+					records2 = append(records2, line[i])
+					j = i
+				}
+				_ = csvwriter.Write(records2)
+				for i := j; i < 38; i++ {
+					records2 = append(records2, "")
+				}
+				_ = csvwriter.Write(records2)
 			}
-			_ = csvwriter.Write(records2)
-			for i := j; i < 38; i++ {
-				records2 = append(records2, "")
-			}
-			_ = csvwriter.Write(records2)
 		}
 	}
 	csvwriter.Flush()
