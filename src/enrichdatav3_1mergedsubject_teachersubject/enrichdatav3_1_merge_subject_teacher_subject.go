@@ -52,18 +52,19 @@ func main() {
 	if len(os.Args) < 9 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
-		fmt.Println("CORRECT Usage: enrichdata {fileName} {startDateStr} {boyReadingEndDateStampIndex} {moyReadingEndDateStampIndex} {eoyReadingEndDateStampIndex} {boyMathEndDateStampIndex} {moyMathEndDateStampIndex} {eoyMathEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
+		fmt.Println("CORRECT Usage: enrichdata {fileName} {startDateStr} {boyEndDateColumnIndex} " +
+			"{moyEndDateColumnIndex} {subjectColumnIndex} {readingEmailColumnIndex} {mathEmailColumnIndex} " +
+			"{scienceEmailColumnIndex} {columnCountIndex}")
 		fmt.Println("")
 		fmt.Println("{fileName} - name of source file, which should be in /Users/alexhawley/Documents/tmp/go_enrich_data")
 		fmt.Println("{startDateStr} - start of date range - (YYYY-mm-dd)")
-		fmt.Println("{boyReadingEndDateStampIndex} - index of column that contains BOY Reading end date range")
-		fmt.Println("{moyReadingEndDateStampIndex} - index of column that contains MOY Reading end date range")
-		fmt.Println("{eoyReadingEndDateStampIndex} - index of column that contains EOY Reading end date range")
-		fmt.Println("{boyMathEndDateStampIndex} - index of column that contains BOY Math end date range")
-		fmt.Println("{moyMathEndDateStampIndex} - index of column that contains MOY Math end date range")
-		fmt.Println("{eoyMathEndDateStampIndex} - index of column that contains EOY Math end date range")
-		fmt.Println("{emailColumnIndex} - the index of which column (0 based) that contains the email")
-		fmt.Println("{columnCountIndex} - the number of valid columns in the source file")
+		fmt.Println("{boyEndDateColumnIndex} - index of column that contains BOY end date range")
+		fmt.Println("{moyEndDateColumnIndex} - index of column that contains MOY end date range")
+		fmt.Println("{subjectColumnIndex} - index of column that contains subject")
+		fmt.Println("{readingEmailColumnIndex} - index of column that contains reading teacher email")
+		fmt.Println("{mathEmailColumnIndex} - index of column that contains math teacher email")
+		fmt.Println("{scienceEmailColumnIndex} - index of column that contains science teacher email")
+		fmt.Println("{columnCountIndex} - the index of which column (0 based) that contains the email")
 		fmt.Println("")
 		fmt.Println("")
 	}
@@ -71,20 +72,62 @@ func main() {
 	layout := "01/02 03:04:05PM '06 -0700"
 	fileName := os.Args[1]
 	startDateStr := os.Args[2]
-	boyReadingEndDateTimeStampIndexStr := os.Args[3]
-	moyReadingEndDateTimeStampIndexStr := os.Args[4]
-	eoyReadingEndDateTimeStampIndexStr := os.Args[5]
-	boyMathEndDateTimeStampIndexStr := os.Args[6]
-	moyMathEndDateTimeStampIndexStr := os.Args[7]
-	eoyMathEndDateTimeStampIndexStr := os.Args[8]
-	emailColumnIndexStr := os.Args[9]
-	columnCountStr := os.Args[10]
+	boyEndDateColumnIndexStr := os.Args[3]
+	moyEndDateColumnIndexStr := os.Args[4]
+	subjectColumnIndexStr := os.Args[5]
+	readingEmailColumnIndexStr := os.Args[6]
+	mathEmailColumnIndexStr := os.Args[7]
+	scienceEmailColumnIndexStr := os.Args[8]
+	columnCountStr := os.Args[9]
 
-	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
+	fmt.Println("fileName: " + fileName)
+	fmt.Println("boyEndDateColumnIndexStr: " + boyEndDateColumnIndexStr)
+	fmt.Println("moyEndDateColumnIndexStr: " + moyEndDateColumnIndexStr)
+	fmt.Println("subjectColumnIndexStr: " + subjectColumnIndexStr)
+	fmt.Println("readingEmailColumnIndexStr: " + readingEmailColumnIndexStr)
+	fmt.Println("mathEmailColumnIndexStr: " + mathEmailColumnIndexStr)
+	fmt.Println("scienceEmailColumnIndexStr: " + scienceEmailColumnIndexStr)
+	fmt.Println("columnCountStr: " + columnCountStr)
+
+	boyEndDateColumnIndex64, err := strconv.ParseInt(boyEndDateColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	boyEndDateColumnIndex := int(boyEndDateColumnIndex64)
+
+	moyEndDateColumnIndex64, err := strconv.ParseInt(moyEndDateColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	moyEndDateColumnIndex := int(moyEndDateColumnIndex64)
+
+	subjectColumnIndex64, err := strconv.ParseInt(subjectColumnIndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1: " + err.Error())
 		os.Exit(1)
 	}
+	subjectColumnIndex := int(subjectColumnIndex64)
+
+	readingEmailColumnIndex, err := strconv.ParseInt(readingEmailColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1: " + err.Error())
+		os.Exit(1)
+	}
+
+	mathEmailColumnIndex, err := strconv.ParseInt(mathEmailColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1: " + err.Error())
+		os.Exit(1)
+	}
+
+	scienceEmailColumnIndex, err := strconv.ParseInt(scienceEmailColumnIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1: " + err.Error())
+		os.Exit(1)
+	}
+
 	columnCount64, err := strconv.ParseInt(columnCountStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1.5: " + err.Error())
@@ -92,55 +135,12 @@ func main() {
 	}
 	columnCount := int(columnCount64)
 
-	boyReadingEndDateTimeStampIndex64, err := strconv.ParseInt(boyReadingEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	boyReadingEndDateTimeStampIndex := int(boyReadingEndDateTimeStampIndex64)
-
-	moyReadingEndDateTimeStampIndex64, err := strconv.ParseInt(moyReadingEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	moyReadingEndDateTimeStampIndex := int(moyReadingEndDateTimeStampIndex64)
-
-	eoyReadingEndDateTimeStampIndex64, err := strconv.ParseInt(eoyReadingEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	eoyReadingEndDateTimeStampIndex := int(eoyReadingEndDateTimeStampIndex64)
-
-	boyMathEndDateTimeStampIndex64, err := strconv.ParseInt(boyMathEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	boyMathEndDateTimeStampIndex := int(boyMathEndDateTimeStampIndex64)
-
-	moyMathEndDateTimeStampIndex64, err := strconv.ParseInt(moyMathEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	moyMathEndDateTimeStampIndex := int(moyMathEndDateTimeStampIndex64)
-
-	eoyMathEndDateTimeStampIndex64, err := strconv.ParseInt(eoyMathEndDateTimeStampIndexStr, 10, 64)
-	if err != nil {
-		fmt.Print("Error 1.6: " + err.Error())
-		os.Exit(1)
-	}
-	eoyMathEndDateTimeStampIndex := int(eoyMathEndDateTimeStampIndex64)
-
 	value := convertStrToDate(startDateStr)
 	t, _ := time.Parse(layout, value)
 	startDate := strconv.FormatInt(t.Unix(), 10)
 
-	enrichData(fileName, startDate, boyReadingEndDateTimeStampIndex, moyReadingEndDateTimeStampIndex,
-		eoyReadingEndDateTimeStampIndex, boyMathEndDateTimeStampIndex, moyMathEndDateTimeStampIndex,
-		eoyMathEndDateTimeStampIndex, emailColumnIndex, columnCount)
+	enrichData(fileName, startDate, boyEndDateColumnIndex, moyEndDateColumnIndex, subjectColumnIndex,
+		readingEmailColumnIndex, mathEmailColumnIndex, scienceEmailColumnIndex, columnCount)
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
@@ -194,9 +194,10 @@ func testStr(val2 string) {
 func testBadge(obj map[string]int) {
 
 }
-func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampIndex int,
-	moyReadingEndDateTimeStampIndex int, eoyReadingEndDateTimeStampIndex int, boyMathEndDateTimeStampIndex int,
-	moyMathEndDateTimeStampIndex int, eoyMathEndDateTimeStampIndex int, emailColumnIndex int64, columnCount int) {
+
+func enrichData(fileName string, startDate string, boyEndDateColumnIndex int,
+	moyEndDateColumnIndex int, subjectColumnIndex int, readingEmailColumnIndex int64, mathEmailColumnIndex int64,
+	scienceEmailColumnIndex int64, columnCount int) {
 
 	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
@@ -299,38 +300,33 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 		test(level3_badges_earned_countEoyCumulative)
 		test(level4_badges_earned_countEoyCumulative)
 
-		boyReadingEndDateStamp := getTimeStampStringFromDateString(line[boyReadingEndDateTimeStampIndex], true)
-		moyReadingEndDateStamp := getTimeStampStringFromDateString(line[moyReadingEndDateTimeStampIndex], true)
-		eoyReadingEndDateStamp := getTimeStampStringFromDateString(line[eoyReadingEndDateTimeStampIndex], true)
-
-		boyMathEndDateStamp := getTimeStampStringFromDateString(line[boyMathEndDateTimeStampIndex], true)
-		moyMathEndDateStamp := getTimeStampStringFromDateString(line[moyMathEndDateTimeStampIndex], true)
-		eoyMathEndDateStamp := getTimeStampStringFromDateString(line[eoyMathEndDateTimeStampIndex], true)
-
-		boyEndDate := boyReadingEndDateStamp
-		if boyReadingEndDateStamp == "0" || strings.Contains(boyReadingEndDateStamp, "-") {
-			boyEndDate = boyMathEndDateStamp
-		}
-
-		moyEndDate := moyReadingEndDateStamp
-		if moyReadingEndDateStamp == "0" || strings.Contains(moyReadingEndDateStamp, "-") {
-			moyEndDate = moyMathEndDateStamp
-		}
-
-		eoyEndDate := eoyReadingEndDateStamp
-		if eoyReadingEndDateStamp == "0" || strings.Contains(eoyReadingEndDateStamp, "-") {
-			eoyEndDate = eoyMathEndDateStamp
-		}
+		email := ""
 
 		if i > 0 {
 
-			if line[emailColumnIndex] != "" {
+			boyEndDate := getTimeStampStringFromDateString(line[boyEndDateColumnIndex], true)
+			moyEndDate := getTimeStampStringFromDateString(line[moyEndDateColumnIndex], true)
+
+			subject := line[subjectColumnIndex]
+			if subject == "Language Arts" {
+				email = line[readingEmailColumnIndex]
+			} else if subject == "Mathematics" {
+				email = line[mathEmailColumnIndex]
+			} else if subject == "Science" {
+				email = line[scienceEmailColumnIndex]
+			}
+
+			fmt.Println("boyEndDate: " + boyEndDate)
+			fmt.Println("subject: " + subject)
+			fmt.Println("email: " + email)
+
+			if email != "" {
 
 				/**
 				 * BOY
 				 */
 				// current year
-				badgesItemBoy := searchBadges(db, startDate, boyEndDate, line[emailColumnIndex])
+				badgesItemBoy := searchBadges(db, startDate, boyEndDate, email)
 				TotalBadgesEarnedBoy = badgesItemBoy["TotalBadgesEarned"]
 				level1_badges_earned_countBoy = badgesItemBoy["level1_badges_earned_count"]
 				level2_badges_earned_countBoy = badgesItemBoy["level2_badges_earned_count"]
@@ -338,61 +334,44 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 				level4_badges_earned_countBoy = badgesItemBoy["level4_badges_earned_count"]
 
 				// cumulative
-				badgesItemBoyCumulative := searchBadges(db, startDateCumulative, boyEndDate, line[emailColumnIndex])
+				badgesItemBoyCumulative := searchBadges(db, startDateCumulative, boyEndDate, email)
 				TotalBadgesEarnedBoyCumulative = badgesItemBoyCumulative["TotalBadgesEarned"]
 				level1_badges_earned_countBoyCumulative = badgesItemBoyCumulative["level1_badges_earned_count"]
 				level2_badges_earned_countBoyCumulative = badgesItemBoyCumulative["level2_badges_earned_count"]
 				level3_badges_earned_countBoyCumulative = badgesItemBoyCumulative["level3_badges_earned_count"]
 				level4_badges_earned_countBoyCumulative = badgesItemBoyCumulative["level4_badges_earned_count"]
 
-				/**
-				 * MOY
-				 */
-				// current year
-				badgesItemMoy := searchBadges(db, startDate, moyEndDate, line[emailColumnIndex])
-				TotalBadgesEarnedMoy = badgesItemMoy["TotalBadgesEarned"]
-				level1_badges_earned_countMoy = badgesItemMoy["level1_badges_earned_count"]
-				level2_badges_earned_countMoy = badgesItemMoy["level2_badges_earned_count"]
-				level3_badges_earned_countMoy = badgesItemMoy["level3_badges_earned_count"]
-				level4_badges_earned_countMoy = badgesItemMoy["level4_badges_earned_count"]
-
-				// cumulative
-				badgesItemMoyCumulative := searchBadges(db, startDateCumulative, moyEndDate, line[emailColumnIndex])
-				TotalBadgesEarnedMoyCumulative = badgesItemMoyCumulative["TotalBadgesEarned"]
-				level1_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level1_badges_earned_count"]
-				level2_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level2_badges_earned_count"]
-				level3_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level3_badges_earned_count"]
-				level4_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level4_badges_earned_count"]
-
-				/**
-				 * EOY
-				 */
-				// current year
-				badgesItemEoy := searchBadges(db, startDate, eoyEndDate, line[emailColumnIndex])
-				TotalBadgesEarnedEoy = badgesItemEoy["TotalBadgesEarned"]
-				level1_badges_earned_countEoy = badgesItemEoy["level1_badges_earned_count"]
-				level2_badges_earned_countEoy = badgesItemEoy["level2_badges_earned_count"]
-				level3_badges_earned_countEoy = badgesItemEoy["level3_badges_earned_count"]
-				level4_badges_earned_countEoy = badgesItemEoy["level4_badges_earned_count"]
-
-				// cumulative
-				badgesItemEoyCumulative := searchBadges(db, startDateCumulative, eoyEndDate, line[emailColumnIndex])
-				TotalBadgesEarnedEoyCumulative = badgesItemEoyCumulative["TotalBadgesEarned"]
-				level1_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level1_badges_earned_count"]
-				level2_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level2_badges_earned_count"]
-				level3_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level3_badges_earned_count"]
-				level4_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level4_badges_earned_count"]
-
 				testBadge(badgesItemBoy)
 				testBadge(badgesItemBoyCumulative)
-				testBadge(badgesItemMoy)
-				testBadge(badgesItemMoyCumulative)
-				testBadge(badgesItemEoy)
-				testBadge(badgesItemEoyCumulative)
+
+				if (moyEndDate != "0" && !strings.Contains(moyEndDate, "-")) {
+
+					/**
+					 * MOY
+					 */
+					// current year
+					badgesItemMoy := searchBadges(db, startDate, moyEndDate, email)
+					TotalBadgesEarnedMoy = badgesItemMoy["TotalBadgesEarned"]
+					level1_badges_earned_countMoy = badgesItemMoy["level1_badges_earned_count"]
+					level2_badges_earned_countMoy = badgesItemMoy["level2_badges_earned_count"]
+					level3_badges_earned_countMoy = badgesItemMoy["level3_badges_earned_count"]
+					level4_badges_earned_countMoy = badgesItemMoy["level4_badges_earned_count"]
+
+					// cumulative
+					badgesItemMoyCumulative := searchBadges(db, startDateCumulative, moyEndDate, email)
+					TotalBadgesEarnedMoyCumulative = badgesItemMoyCumulative["TotalBadgesEarned"]
+					level1_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level1_badges_earned_count"]
+					level2_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level2_badges_earned_count"]
+					level3_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level3_badges_earned_count"]
+					level4_badges_earned_countMoyCumulative = badgesItemMoyCumulative["level4_badges_earned_count"]
+
+					testBadge(badgesItemMoy)
+					testBadge(badgesItemMoyCumulative)
+				}
 			}
 		}
 
-		if line[emailColumnIndex] != "" { // if email IS provided
+		if email != "" { // if email IS provided
 
 			if i == 0 { // first line
 
@@ -457,26 +436,31 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 				records2 = append(records2, "level3_badges_earned_count_moy_cumulative")
 				records2 = append(records2, "level4_badges_earned_count_moy_cumulative")
 
-				/**
-				 * EOY
-				 */
-				// current year
-				records2 = append(records2, "total_badges_earned_eoy_current_year")
-				records2 = append(records2, "level1_badges_earned_count_eoy_current_year")
-				records2 = append(records2, "level2_badges_earned_count_eoy_current_year")
-				records2 = append(records2, "level3_badges_earned_count_eoy_current_year")
-				records2 = append(records2, "level4_badges_earned_count_eoy_current_year")
-				// cumulative
-				records2 = append(records2, "total_badges_earned_eoy_cumulative")
-				records2 = append(records2, "level1_badges_earned_count_eoy_cumulative")
-				records2 = append(records2, "level2_badges_earned_count_eoy_cumulative")
-				records2 = append(records2, "level3_badges_earned_count_eoy_cumulative")
-				records2 = append(records2, "level4_badges_earned_count_eoy_cumulative")
-
 				_ = csvwriter.Write(records2)
 				csvwriter.Flush()
 
 			} else { // after first line
+
+				boyEndDate := getTimeStampStringFromDateString(line[boyEndDateColumnIndex], true)
+				moyEndDate := getTimeStampStringFromDateString(line[moyEndDateColumnIndex], true)
+				useDate := moyEndDate
+
+				if moyEndDate == "0" || strings.Contains(moyEndDate, "-") {
+					useDate = boyEndDate
+				}
+
+				subject := line[subjectColumnIndex]
+				if subject == "Language Arts" {
+					email = line[readingEmailColumnIndex]
+				} else if subject == "Mathematics" {
+					email = line[mathEmailColumnIndex]
+				} else if subject == "Science" {
+					email = line[scienceEmailColumnIndex]
+				}
+
+				fmt.Println("boyEndDate: " + boyEndDate)
+				fmt.Println("subject: " + subject)
+				fmt.Println("email: " + email)
 
 				var records2 []string
 				j := 0
@@ -489,7 +473,7 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 				/**
 				 * Get User Info (and Total Cumulative Coaching Logs)
 				 */
-				var userInfo = searchCumulativeYearLogs(db, eoyEndDate, line[emailColumnIndex], false)
+				var userInfo = searchCumulativeYearLogs(db, useDate, email, false)
 				if (userInfo == UserInfo{}) { // record found
 
 					for i := j; i < 23; i++ {
@@ -505,7 +489,7 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 					 * Get Total Cumulative Coaching Conversations
 					 */
 					totalCumulativeCoachingConversations := 0
-					var userInfoConversations = searchCumulativeYearLogs(db, moyEndDate, line[emailColumnIndex], true)
+					var userInfoConversations = searchCumulativeYearLogs(db, useDate, email, true)
 					if (userInfoConversations != UserInfo{}) { // record found
 						totalCumulativeCoachingConversations = userInfoConversations.TotalCumulativeLogs
 					}
@@ -515,7 +499,7 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 					 */
 					totalCurrentYearCoachingConversations := 0
 					test(totalCurrentYearCoachingConversations)
-					var userInfoCurrentYearConversations = searchCurrentYearLogs(db, startDate, moyEndDate, line[emailColumnIndex], true)
+					var userInfoCurrentYearConversations = searchCurrentYearLogs(db, startDate, useDate, email, true)
 					if (userInfoCurrentYearConversations != UserInfoCurrentYear{}) { // record found
 						totalCurrentYearCoachingConversations = userInfoCurrentYearConversations.TotalCurrentYearLogs
 					}
@@ -526,7 +510,7 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 					 */
 					totalCurrentYearCoachingLogs := 0
 					test(totalCurrentYearCoachingLogs)
-					var userInfoCurrentYearLogs = searchCurrentYearLogs(db, startDate, moyEndDate, line[emailColumnIndex], false)
+					var userInfoCurrentYearLogs = searchCurrentYearLogs(db, startDate, useDate, email, false)
 					fmt.Println("userInfoCurrentYearLogs: ", userInfoCurrentYearLogs)
 					if (userInfoCurrentYearLogs != UserInfoCurrentYear{}) { // record found
 						totalCurrentYearCoachingLogs = userInfoCurrentYearLogs.TotalCurrentYearLogs
@@ -579,19 +563,6 @@ func enrichData(fileName string, startDate string, boyReadingEndDateTimeStampInd
 					records2 = append(records2, strconv.Itoa(level2_badges_earned_countMoyCumulative))
 					records2 = append(records2, strconv.Itoa(level3_badges_earned_countMoyCumulative))
 					records2 = append(records2, strconv.Itoa(level4_badges_earned_countMoyCumulative))
-
-					// EOY - Current Year
-					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedEoy))
-					records2 = append(records2, strconv.Itoa(level1_badges_earned_countEoy))
-					records2 = append(records2, strconv.Itoa(level2_badges_earned_countEoy))
-					records2 = append(records2, strconv.Itoa(level3_badges_earned_countEoy))
-					records2 = append(records2, strconv.Itoa(level4_badges_earned_countEoy))
-					// EOY - Cumulative
-					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedEoyCumulative))
-					records2 = append(records2, strconv.Itoa(level1_badges_earned_countEoyCumulative))
-					records2 = append(records2, strconv.Itoa(level2_badges_earned_countEoyCumulative))
-					records2 = append(records2, strconv.Itoa(level3_badges_earned_countEoyCumulative))
-					records2 = append(records2, strconv.Itoa(level4_badges_earned_countEoyCumulative))
 
 					_ = csvwriter.Write(records2)
 
@@ -748,7 +719,32 @@ func searchCurrentYearLogs(db *sql.DB, startDate string, endDate string, email s
 		whereSql += "AND clt.is_coaching = 1 "
 	}
 
-	results, err := db.Query("  ")
+	results, err := db.Query("SELECT ifnull(u.email, '') as email, " +
+		"ifnull(COUNT(cl.id), 0) as TotalCurrentYearLogs, ifnull(u.id, 0) as user_id, " +
+		"CASE WHEN cu.district_id IS NULL THEN " +
+		"	'Not Coached' " +
+		"ELSE " +
+		"	CASE WHEN cu.district_id = 2 THEN " +
+		"		'engage2learn' " +
+		"	ELSE " +
+		"		'district' " +
+		"	END " +
+		"END as coaching_source " +
+		"FROM `user` u " +
+		"LEFT JOIN `egrowe_coachlog_attendee` cla1 " +
+		"	ON u.id = cla1.user_id AND cla1.present = 1 " +
+		"LEFT JOIN egrowe_coachlog cl " +
+		"	ON cla1.egrowe_coachlog_id = cl.id " +
+		"	AND cl.is_practice = 0 " +
+		"	AND cl.is_deleted = 0 " +
+		"LEFT JOIN egrowe_coachlog_type clt " +
+		"	ON cl.egrowe_coachlog_type_id = clt.id " +
+		"LEFT JOIN `user` cu " +
+		"	ON cl.user_id = cu.id " +
+		"WHERE 1 " +
+		whereSql + " " +
+		"AND u.email = '" + email + "' " +
+		"AND cl.start_datetime BETWEEN " + startDate + " AND " + endDate + " ")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
