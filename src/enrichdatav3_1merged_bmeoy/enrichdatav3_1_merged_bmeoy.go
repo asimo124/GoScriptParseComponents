@@ -49,17 +49,18 @@ type UserBadges struct {
 }
 
 func main() {
-	if len(os.Args) < 7 {
+	if len(os.Args) < 8 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
-		fmt.Println("CORRECT Usage: enrichdata3_1merged {fileName} {startDateStr} {moyEndDateStampIndex} " +
-			"{eoyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
+		fmt.Println("CORRECT Usage: enrichdata3_1merged_bmeoy {fileName} {startDateStr} {boyEndDateStampIndex} " +
+			"{moyEndDateStampIndex} {eoyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
 		fmt.Println("")
 		fmt.Println("{fileName} - name of source file, which should be in /Users/alexhawley/Documents/tmp/go_enrich_data")
 		fmt.Println("{startDateStr} - start of date range - (YYYY-mm-dd)")
+		fmt.Println("{boyEndDateStampIndex} - index of column that contains BOY Reading end date range")
 		fmt.Println("{moyEndDateStampIndex} - index of column that contains MOY Reading end date range")
 		fmt.Println("{eoyEndDateStampIndex} - index of column that contains EOY Reading end date range")
-		fmt.Println("{emailColumnIndex} - the index of which column (0 based) that contains the email")
+		fmt.Println("{boymailColumnIndex} - the index of which column (0 based) that contains the email")
 		fmt.Println("{columnCountIndex} - the number of valid columns in the source file")
 		fmt.Println("")
 		fmt.Println("")
@@ -68,10 +69,11 @@ func main() {
 	layout := "01/02 03:04:05PM '06 -0700"
 	fileName := os.Args[1]
 	startDateStr := os.Args[2]
-	moyEndDateTimeStampIndexStr := os.Args[3]
-	eoyEndDateTimeStampIndexStr := os.Args[4]
-	emailColumnIndexStr := os.Args[5]
-	columnCountStr := os.Args[6]
+	boyEndDateTimeStampIndexStr := os.Args[3]
+	moyEndDateTimeStampIndexStr := os.Args[4]
+	eoyEndDateTimeStampIndexStr := os.Args[5]
+	emailColumnIndexStr := os.Args[6]
+	columnCountStr := os.Args[7]
 
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {
@@ -84,6 +86,13 @@ func main() {
 		os.Exit(1)
 	}
 	columnCount := int(columnCount64)
+
+	boyEndDateTimeStampIndex64, err := strconv.ParseInt(boyEndDateTimeStampIndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	boyEndDateTimeStampIndex := int(boyEndDateTimeStampIndex64)
 
 	moyEndDateTimeStampIndex64, err := strconv.ParseInt(moyEndDateTimeStampIndexStr, 10, 64)
 	if err != nil {
@@ -103,7 +112,7 @@ func main() {
 	t, _ := time.Parse(layout, value)
 	startDate := strconv.FormatInt(t.Unix(), 10)
 
-	enrichData(fileName, startDate, moyEndDateTimeStampIndex, eoyEndDateTimeStampIndex, emailColumnIndex, columnCount)
+	enrichData(fileName, startDate, boyEndDateTimeStampIndex, moyEndDateTimeStampIndex, eoyEndDateTimeStampIndex, emailColumnIndex, columnCount)
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
@@ -157,8 +166,8 @@ func testStr(val2 string) {
 func testBadge(obj map[string]int) {
 
 }
-func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int, eoyEndDateTimeStampIndex int,
-	emailColumnIndex int64, columnCount int) {
+func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int, moyEndDateTimeStampIndex int,
+	eoyEndDateTimeStampIndex int, emailColumnIndex int64, columnCount int) {
 
 	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
@@ -261,8 +270,14 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 		test(level3_badges_earned_countEoyCumulative)
 		test(level4_badges_earned_countEoyCumulative)
 
+		boyEndDateStamp := getTimeStampStringFromDateString(line[boyEndDateTimeStampIndex], true)
 		moyEndDateStamp := getTimeStampStringFromDateString(line[moyEndDateTimeStampIndex], true)
 		eoyEndDateStamp := getTimeStampStringFromDateString(line[eoyEndDateTimeStampIndex], true)
+
+		boyEndDate := boyEndDateStamp
+		if boyEndDateStamp == "0" || strings.Contains(boyEndDateStamp, "-") {
+			boyEndDate = boyEndDateStamp
+		}
 
 		moyEndDate := moyEndDateStamp
 		if moyEndDateStamp == "0" || strings.Contains(moyEndDateStamp, "-") {
@@ -282,6 +297,17 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 			if line[emailColumnIndex] != "" {
 
 				email := strings.Replace(line[emailColumnIndex], "'", "''", -1)
+
+				/**
+				 * MOY
+				 */
+				// current year
+				badgesItemBoy := searchBadges(db, startDate, boyEndDate, email)
+				TotalBadgesEarnedBoy = badgesItemBoy["TotalBadgesEarned"]
+				level1_badges_earned_countBoy = badgesItemBoy["level1_badges_earned_count"]
+				level2_badges_earned_countBoy = badgesItemBoy["level2_badges_earned_count"]
+				level3_badges_earned_countBoy = badgesItemBoy["level3_badges_earned_count"]
+				level4_badges_earned_countBoy = badgesItemBoy["level4_badges_earned_count"]
 
 				/**
 				 * MOY
@@ -307,6 +333,7 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 				 */
 				// current year
 				badgesItemEoy := searchBadges(db, startDate, eoyEndDate, email)
+				
 				TotalBadgesEarnedEoy = badgesItemEoy["TotalBadgesEarned"]
 				level1_badges_earned_countEoy = badgesItemEoy["level1_badges_earned_count"]
 				level2_badges_earned_countEoy = badgesItemEoy["level2_badges_earned_count"]
@@ -361,6 +388,22 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 				records2 = append(records2, "coaching_source")
 				records2 = append(records2, "assigned_coach")
 				records2 = append(records2, "coaching_assignment")
+
+				/**
+				 * BOY
+				 */
+				// current year
+				records2 = append(records2, "total_badges_earned_boy_current_year")
+				records2 = append(records2, "level1_badges_earned_count_boy_current_year")
+				records2 = append(records2, "level2_badges_earned_count_boy_current_year")
+				records2 = append(records2, "level3_badges_earned_count_boy_current_year")
+				records2 = append(records2, "level4_badges_earned_count_boy_current_year")
+				// cumulative
+				records2 = append(records2, "total_badges_earned_boy_cumulative")
+				records2 = append(records2, "level1_badges_earned_count_boy_cumulative")
+				records2 = append(records2, "level2_badges_earned_count_boy_cumulative")
+				records2 = append(records2, "level3_badges_earned_count_boy_cumulative")
+				records2 = append(records2, "level4_badges_earned_count_boy_cumulative")
 
 				/**
 				 * MOY
@@ -477,6 +520,19 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 					records2 = append(records2, userInfo.assigned_coach)
 					records2 = append(records2, userInfo.coaching_assignment)
 
+					// BOY - Current Year
+					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoy))
+					records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoy))
+					records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoy))
+					// BOY - Cumulative
+					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level1_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level2_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level3_badges_earned_countBoyCumulative))
+					records2 = append(records2, strconv.Itoa(level4_badges_earned_countBoyCumulative))
+
 					// MOY - Current Year
 					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedMoy))
 					records2 = append(records2, strconv.Itoa(level1_badges_earned_countMoy))
@@ -496,6 +552,7 @@ func enrichData(fileName string, startDate string, moyEndDateTimeStampIndex int,
 					records2 = append(records2, strconv.Itoa(level2_badges_earned_countEoy))
 					records2 = append(records2, strconv.Itoa(level3_badges_earned_countEoy))
 					records2 = append(records2, strconv.Itoa(level4_badges_earned_countEoy))
+
 					// EOY - Cumulative
 					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedEoyCumulative))
 					records2 = append(records2, strconv.Itoa(level1_badges_earned_countEoyCumulative))
