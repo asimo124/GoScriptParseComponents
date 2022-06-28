@@ -49,17 +49,21 @@ type UserBadges struct {
 }
 
 func main() {
-	if len(os.Args) < 8 {
+	if len(os.Args) < 11 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
-		fmt.Println("CORRECT Usage: enrichdata3_1merged_bmeoy {fileName} {startDateStr} {boyEndDateStampIndex} " +
-			"{moyEndDateStampIndex} {eoyEndDateStampIndex} {emailColumnIndex} {columnCountIndex}")
+		fmt.Println("CORRECT Usage: enrichdata3_1merged_bmeoy_subject {fileName} {startDateStr} {boyEndDateStamp1Index} " +
+			"{boyEndDateStamp2Index} {moyEndDateStamp1Index} {moyEndDateStamp2Index} {eoyEndDateStamp1Index} " +
+			"{eoyEndDateStamp2Index} {emailColumnIndex} {columnCountIndex}")
 		fmt.Println("")
 		fmt.Println("{fileName} - name of source file, which should be in /Users/alexhawley/Documents/tmp/go_enrich_data")
 		fmt.Println("{startDateStr} - start of date range - (YYYY-mm-dd)")
-		fmt.Println("{boyEndDateStampIndex} - index of column that contains BOY Reading end date range")
-		fmt.Println("{moyEndDateStampIndex} - index of column that contains MOY Reading end date range")
-		fmt.Println("{eoyEndDateStampIndex} - index of column that contains EOY Reading end date range")
+		fmt.Println("{boyEndDateStamp1Index} - index 1 of column that contains BOY Reading end date range")
+		fmt.Println("{boyEndDateStamp2Index} - index 2 of column that contains BOY Reading end date range")
+		fmt.Println("{moyEndDateStamp1Index} - index 1 of column that contains MOY Reading end date range")
+		fmt.Println("{moyEndDateStamp2Index} - index 2 of column that contains MOY Reading end date range")
+		fmt.Println("{eoyEndDateStamp1Index} - index 1 of column that contains EOY Reading end date range")
+		fmt.Println("{eoyEndDateStamp2Index} - index 2 of column that contains EOY Reading end date range")
 		fmt.Println("{boymailColumnIndex} - the index of which column (0 based) that contains the email")
 		fmt.Println("{columnCountIndex} - the number of valid columns in the source file")
 		fmt.Println("{ignoreBlankDates} - whether to stop enrichment of blanks dates or not")
@@ -67,14 +71,32 @@ func main() {
 		fmt.Println("")
 	}
 
+	/*/
+	for index, value := range os.Args {
+		fmt.Println("arg[]: ", index, value)
+	}
+	//*/
+
 	layout := "01/02 03:04:05PM '06 -0700"
 	fileName := os.Args[1]
 	startDateStr := os.Args[2]
-	boyEndDateTimeStampIndexStr := os.Args[3]
-	moyEndDateTimeStampIndexStr := os.Args[4]
-	eoyEndDateTimeStampIndexStr := os.Args[5]
-	emailColumnIndexStr := os.Args[6]
-	columnCountStr := os.Args[7]
+	boyEndDateTimeStamp1IndexStr := os.Args[3]
+	boyEndDateTimeStamp2IndexStr := os.Args[4]
+	moyEndDateTimeStamp1IndexStr := os.Args[5]
+	moyEndDateTimeStamp2IndexStr := os.Args[6]
+	eoyEndDateTimeStamp1IndexStr := os.Args[7]
+	eoyEndDateTimeStamp2IndexStr := os.Args[8]
+	emailColumnIndexStr := os.Args[9]
+	columnCountStr := os.Args[10]
+
+	/*/
+	fmt.Println("boyEndDateTimeStamp1IndexStr: ", boyEndDateTimeStamp1IndexStr)
+	fmt.Println("boyEndDateTimeStamp2IndexStr: ", boyEndDateTimeStamp2IndexStr)
+	fmt.Println("moyEndDateTimeStamp1IndexStr: ", moyEndDateTimeStamp1IndexStr)
+	fmt.Println("moyEndDateTimeStamp2IndexStr: ", moyEndDateTimeStamp2IndexStr)
+	fmt.Println("eoyEndDateTimeStamp1IndexStr: ", eoyEndDateTimeStamp1IndexStr)
+	fmt.Println("eoyEndDateTimeStamp2IndexStr: ", eoyEndDateTimeStamp2IndexStr)
+	//*/
 
 	emailColumnIndex, err := strconv.ParseInt(emailColumnIndexStr, 10, 64)
 	if err != nil {
@@ -88,32 +110,54 @@ func main() {
 	}
 	columnCount := int(columnCount64)
 
-	boyEndDateTimeStampIndex64, err := strconv.ParseInt(boyEndDateTimeStampIndexStr, 10, 64)
+	boyEndDateTimeStamp1Index64, err := strconv.ParseInt(boyEndDateTimeStamp1IndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1.6: " + err.Error())
 		os.Exit(1)
 	}
-	boyEndDateTimeStampIndex := int(boyEndDateTimeStampIndex64)
+	boyEndDateTimeStamp1Index := int(boyEndDateTimeStamp1Index64)
 
-	moyEndDateTimeStampIndex64, err := strconv.ParseInt(moyEndDateTimeStampIndexStr, 10, 64)
+	boyEndDateTimeStamp2Index64, err := strconv.ParseInt(boyEndDateTimeStamp2IndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1.6: " + err.Error())
 		os.Exit(1)
 	}
-	moyEndDateTimeStampIndex := int(moyEndDateTimeStampIndex64)
+	boyEndDateTimeStamp2Index := int(boyEndDateTimeStamp2Index64)
 
-	eoyEndDateTimeStampIndex64, err := strconv.ParseInt(eoyEndDateTimeStampIndexStr, 10, 64)
+	moyEndDateTimeStamp1Index64, err := strconv.ParseInt(moyEndDateTimeStamp1IndexStr, 10, 64)
 	if err != nil {
 		fmt.Print("Error 1.6: " + err.Error())
 		os.Exit(1)
 	}
-	eoyEndDateTimeStampIndex := int(eoyEndDateTimeStampIndex64)
+	moyEndDateTimeStamp1Index := int(moyEndDateTimeStamp1Index64)
+
+	moyEndDateTimeStamp2Index64, err := strconv.ParseInt(moyEndDateTimeStamp2IndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	moyEndDateTimeStamp2Index := int(moyEndDateTimeStamp2Index64)
+
+	eoyEndDateTimeStamp1Index64, err := strconv.ParseInt(eoyEndDateTimeStamp1IndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	eoyEndDateTimeStamp1Index := int(eoyEndDateTimeStamp1Index64)
+
+	eoyEndDateTimeStamp2Index64, err := strconv.ParseInt(eoyEndDateTimeStamp2IndexStr, 10, 64)
+	if err != nil {
+		fmt.Print("Error 1.6: " + err.Error())
+		os.Exit(1)
+	}
+	eoyEndDateTimeStamp2Index := int(eoyEndDateTimeStamp2Index64)
 
 	value := convertStrToDate(startDateStr)
 	t, _ := time.Parse(layout, value)
 	startDate := strconv.FormatInt(t.Unix(), 10)
 
-	enrichData(fileName, startDate, boyEndDateTimeStampIndex, moyEndDateTimeStampIndex, eoyEndDateTimeStampIndex, emailColumnIndex, columnCount)
+	enrichData(fileName, startDate, boyEndDateTimeStamp1Index, boyEndDateTimeStamp2Index, moyEndDateTimeStamp1Index,
+		moyEndDateTimeStamp2Index, eoyEndDateTimeStamp1Index, eoyEndDateTimeStamp2Index, emailColumnIndex, columnCount)
 }
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
@@ -171,8 +215,18 @@ func testBool(val2 bool) {
 
 }
 
-func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int, moyEndDateTimeStampIndex int,
-	eoyEndDateTimeStampIndex int, emailColumnIndex int64, columnCount int) {
+func enrichData(fileName string, startDate string, boyEndDateTimeStamp1Index int, boyEndDateTimeStamp2Index int,
+	moyEndDateTimeStamp1Index int, moyEndDateTimeStamp2Index int, eoyEndDateTimeStamp1Index int,
+	eoyEndDateTimeStamp2Index int, emailColumnIndex int64, columnCount int) {
+
+	/*/
+	fmt.Println("boyEndDateTimeStamp1Index: ", boyEndDateTimeStamp1Index)
+	fmt.Println("boyEndDateTimeStamp2Index: ", boyEndDateTimeStamp2Index)
+	fmt.Println("moyEndDateTimeStamp1Index: ", moyEndDateTimeStamp1Index)
+	fmt.Println("moyEndDateTimeStamp2Index: ", moyEndDateTimeStamp2Index)
+	fmt.Println("eoyEndDateTimeStamp1Index: ", eoyEndDateTimeStamp1Index)
+	fmt.Println("eoyEndDateTimeStamp2Index: ", eoyEndDateTimeStamp2Index)
+	//*/
 
 	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
@@ -275,28 +329,55 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		test(level3_badges_earned_countEoyCumulative)
 		test(level4_badges_earned_countEoyCumulative)
 
-		boyEndDateStamp := getTimeStampStringFromDateString(line[boyEndDateTimeStampIndex], true)
-		moyEndDateStamp := getTimeStampStringFromDateString(line[moyEndDateTimeStampIndex], true)
-		eoyEndDateStamp := getTimeStampStringFromDateString(line[eoyEndDateTimeStampIndex], true)
+		fmt.Println("line[boyEndDateTimeStamp1Index]: ", line[boyEndDateTimeStamp1Index])
+		fmt.Println("line[boyEndDateTimeStamp2Index]: ", line[boyEndDateTimeStamp2Index])
+		fmt.Println("line[moyEndDateTimeStamp1Index]: ", line[moyEndDateTimeStamp1Index])
+		fmt.Println("line[moyEndDateTimeStamp2Index]: ", line[moyEndDateTimeStamp2Index])
+		fmt.Println("line[eoyEndDateTimeStamp1Index]: ", line[eoyEndDateTimeStamp1Index])
+		fmt.Println("line[eoyEndDateTimeStamp2Index]: ", line[eoyEndDateTimeStamp2Index])
 
-		boyEndDate := boyEndDateStamp
-		moyEndDate := moyEndDateStamp
-		eoyEndDate := eoyEndDateStamp
+		boyEndDateStamp1 := getTimeStampStringFromDateString(line[boyEndDateTimeStamp1Index], true)
+		moyEndDateStamp1 := getTimeStampStringFromDateString(line[moyEndDateTimeStamp1Index], true)
+		eoyEndDateStamp1 := getTimeStampStringFromDateString(line[eoyEndDateTimeStamp1Index], true)
+
+		boyEndDateStamp2 := getTimeStampStringFromDateString(line[boyEndDateTimeStamp2Index], true)
+		moyEndDateStamp2 := getTimeStampStringFromDateString(line[moyEndDateTimeStamp2Index], true)
+		eoyEndDateStamp2 := getTimeStampStringFromDateString(line[eoyEndDateTimeStamp2Index], true)
+
+		fmt.Println("boyEndDateStamp1: ", boyEndDateStamp1)
+		fmt.Println("boyEndDateStamp2: ", boyEndDateStamp2)
+		fmt.Println("moyEndDateStamp1: ", moyEndDateStamp1)
+		fmt.Println("moyEndDateStamp2: ", moyEndDateStamp2)
+		fmt.Println("eoyEndDateStamp1: ", eoyEndDateStamp1)
+		fmt.Println("eoyEndDateStamp2: ", eoyEndDateStamp2)
+
+		boyEndDate := boyEndDateStamp1
+		if !isValidDate(boyEndDateStamp1) {
+			boyEndDate = boyEndDateStamp2
+		}
+		moyEndDate := moyEndDateStamp1
+		if !isValidDate(moyEndDateStamp1) {
+			moyEndDate = moyEndDateStamp2
+		}
+		eoyEndDate := eoyEndDateStamp1
+		if !isValidDate(eoyEndDateStamp1) {
+			eoyEndDate = eoyEndDateStamp2
+		}
+
+		fmt.Println("boyEndDate: ", boyEndDate)
+		fmt.Println("moyEndDate: ", moyEndDate)
+		fmt.Println("eoyEndDate: ", eoyEndDate)
 
 		coachlogEoyDate := "0"
-		if eoyEndDateStamp == "" || eoyEndDateStamp == "0" || strings.Contains(eoyEndDateStamp, "-") {
-			if moyEndDateStamp == "" || moyEndDateStamp == "0" || strings.Contains(moyEndDateStamp, "-") {
-				if boyEndDateStamp == "" || boyEndDateStamp == "0" || strings.Contains(boyEndDateStamp, "-") {
-
-				} else {
-					coachlogEoyDate = boyEndDate
-				}
-			} else {
-				coachlogEoyDate = moyEndDate
-			}
-		} else {
-			coachlogEoyDate = eoyEndDateStamp
+		if isValidDate(boyEndDate) {
+			coachlogEoyDate = boyEndDate
+		} else if isValidDate(moyEndDate) {
+			coachlogEoyDate = moyEndDate
+		} else if isValidDate(eoyEndDate) {
+			coachlogEoyDate = eoyEndDate
 		}
+
+		fmt.Println("coachlogEoyDate: ", coachlogEoyDate)
 
 		if i > 0 {
 
@@ -306,6 +387,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 			if line[emailColumnIndex] != "" {
 
 				email := strings.Replace(line[emailColumnIndex], "'", "''", -1)
+
 				/**
 				 * BOY
 				 */
@@ -487,7 +569,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					 * Get Total Cumulative Coaching Conversations
 					 */
 					totalCumulativeCoachingConversations := 0
-					var userInfoConversations = searchCumulativeYearLogs(db, eoyEndDate, email, true)
+					var userInfoConversations = searchCumulativeYearLogs(db, coachlogEoyDate, email, true)
 					if (userInfoConversations != UserInfo{}) { // record found
 						totalCumulativeCoachingConversations = userInfoConversations.TotalCumulativeLogs
 					}
@@ -599,6 +681,13 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 	csvwriter.Flush()
 	csvFile.Close()
 	fmt.Println("Script completed")
+}
+
+func isValidDate(date2 string) bool {
+	if date2 == "" || date2 == "0" || strings.Contains(date2, "-") {
+		return false
+	}
+	return true
 }
 
 func searchBadges(db *sql.DB, startDate string, endDate string, email string) map[string]int {
