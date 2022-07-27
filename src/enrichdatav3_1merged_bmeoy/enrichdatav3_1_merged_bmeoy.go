@@ -279,13 +279,16 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 		moyEndDateStamp := getTimeStampStringFromDateString(line[moyEndDateTimeStampIndex], true)
 		//eoyEndDateStamp := getTimeStampStringFromDateString(line[eoyEndDateTimeStampIndex], true)
 		eoyEndDateStamp := "0"
+		testStr(eoyEndDateStamp)
 
 		boyEndDate := boyEndDateStamp
 		moyEndDate := moyEndDateStamp
 		//eoyEndDate := eoyEndDateStamp
 		eoyEndDate := "0"
+		testStr(eoyEndDate)
 
 		coachlogEoyDate := "0"
+		/*/
 		if eoyEndDateStamp == "" || eoyEndDateStamp == "0" || strings.Contains(eoyEndDateStamp, "-") {
 			if moyEndDateStamp == "" || moyEndDateStamp == "0" || strings.Contains(moyEndDateStamp, "-") {
 				if boyEndDateStamp == "" || boyEndDateStamp == "0" || strings.Contains(boyEndDateStamp, "-") {
@@ -298,6 +301,12 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 			}
 		} else {
 			coachlogEoyDate = eoyEndDateStamp
+		}
+		//*/
+
+		coachlogEoyDate = moyEndDateStamp
+		if moyEndDateStamp == "" || moyEndDateStamp == "0" || strings.Contains(moyEndDateStamp, "-") {
+			coachlogEoyDate = boyEndDateStamp
 		}
 
 		if i > 0 {
@@ -495,7 +504,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					 * Get Total Cumulative Coaching Conversations
 					 */
 					totalCumulativeCoachingConversations := 0
-					var userInfoConversations = searchCumulativeYearLogs(db, eoyEndDate, email, true)
+					var userInfoConversations = searchCumulativeYearLogs(db, coachlogEoyDate, email, true)
 					if (userInfoConversations != UserInfo{}) { // record found
 						totalCumulativeCoachingConversations = userInfoConversations.TotalCumulativeLogs
 					}
@@ -505,7 +514,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					 */
 					totalCurrentYearCoachingConversations := 0
 					test(totalCurrentYearCoachingConversations)
-					var userInfoCurrentYearConversations = searchCurrentYearLogs(db, startDate, eoyEndDate, email, true)
+					var userInfoCurrentYearConversations = searchCurrentYearLogs(db, startDate, coachlogEoyDate, email, true)
 					if (userInfoCurrentYearConversations != UserInfoCurrentYear{}) { // record found
 						totalCurrentYearCoachingConversations = userInfoCurrentYearConversations.TotalCurrentYearLogs
 					}
@@ -516,12 +525,14 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					 */
 					totalCurrentYearCoachingLogs := 0
 					test(totalCurrentYearCoachingLogs)
-					var userInfoCurrentYearLogs = searchCurrentYearLogs(db, startDate, eoyEndDate, email, false)
+					var userInfoCurrentYearLogs = searchCurrentYearLogs(db, startDate, coachlogEoyDate, email, false)
 					fmt.Println("userInfoCurrentYearLogs: ", userInfoCurrentYearLogs)
 					if (userInfoCurrentYearLogs != UserInfoCurrentYear{}) { // record found
 						totalCurrentYearCoachingLogs = userInfoCurrentYearLogs.TotalCurrentYearLogs
 					}
 					records2 = append(records2, strconv.Itoa(totalCurrentYearCoachingLogs))
+
+					fmt.Println("totalCumulativeCoachingConversations: ", totalCumulativeCoachingConversations)
 
 					// Cumulative Coaching Conversations
 					records2 = append(records2, strconv.Itoa(totalCumulativeCoachingConversations))
