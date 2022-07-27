@@ -277,11 +277,13 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 
 		boyEndDateStamp := getTimeStampStringFromDateString(line[boyEndDateTimeStampIndex], true)
 		moyEndDateStamp := getTimeStampStringFromDateString(line[moyEndDateTimeStampIndex], true)
-		eoyEndDateStamp := getTimeStampStringFromDateString(line[eoyEndDateTimeStampIndex], true)
+		//eoyEndDateStamp := getTimeStampStringFromDateString(line[eoyEndDateTimeStampIndex], true)
+		eoyEndDateStamp := "0"
 
 		boyEndDate := boyEndDateStamp
 		moyEndDate := moyEndDateStamp
-		eoyEndDate := eoyEndDateStamp
+		//eoyEndDate := eoyEndDateStamp
+		eoyEndDate := "0"
 
 		coachlogEoyDate := "0"
 		if eoyEndDateStamp == "" || eoyEndDateStamp == "0" || strings.Contains(eoyEndDateStamp, "-") {
@@ -348,6 +350,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				 * EOY
 				 */
 				// current year
+				/*/
 				badgesItemEoy := searchBadges(db, startDate, eoyEndDate, email)
 
 				TotalBadgesEarnedEoy = badgesItemEoy["TotalBadgesEarned"]
@@ -363,11 +366,14 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				level2_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level2_badges_earned_count"]
 				level3_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level3_badges_earned_count"]
 				level4_badges_earned_countEoyCumulative = badgesItemEoyCumulative["level4_badges_earned_count"]
+				//*/
 
 				testBadge(badgesItemMoy)
 				testBadge(badgesItemMoyCumulative)
+				/*/
 				testBadge(badgesItemEoy)
 				testBadge(badgesItemEoyCumulative)
+				//*/
 			}
 		}
 
@@ -441,6 +447,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				 * EOY
 				 */
 				// current year
+				/*/
 				records2 = append(records2, "total_badges_earned_eoy_current_year")
 				records2 = append(records2, "level1_badges_earned_count_eoy_current_year")
 				records2 = append(records2, "level2_badges_earned_count_eoy_current_year")
@@ -452,6 +459,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 				records2 = append(records2, "level2_badges_earned_count_eoy_cumulative")
 				records2 = append(records2, "level3_badges_earned_count_eoy_cumulative")
 				records2 = append(records2, "level4_badges_earned_count_eoy_cumulative")
+				//*/
 
 				_ = csvwriter.Write(records2)
 				csvwriter.Flush()
@@ -563,6 +571,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					records2 = append(records2, strconv.Itoa(level4_badges_earned_countMoyCumulative))
 
 					// EOY - Current Year
+					/*/
 					records2 = append(records2, strconv.Itoa(TotalBadgesEarnedEoy))
 					records2 = append(records2, strconv.Itoa(level1_badges_earned_countEoy))
 					records2 = append(records2, strconv.Itoa(level2_badges_earned_countEoy))
@@ -575,6 +584,7 @@ func enrichData(fileName string, startDate string, boyEndDateTimeStampIndex int,
 					records2 = append(records2, strconv.Itoa(level2_badges_earned_countEoyCumulative))
 					records2 = append(records2, strconv.Itoa(level3_badges_earned_countEoyCumulative))
 					records2 = append(records2, strconv.Itoa(level4_badges_earned_countEoyCumulative))
+					//*/
 
 					_ = csvwriter.Write(records2)
 
