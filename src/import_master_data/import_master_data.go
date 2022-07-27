@@ -94,11 +94,14 @@ type TableInfo struct {
 }
 
 func main() {
-	if len(os.Args) < 8 {
+	if len(os.Args) < 22 {
 		fmt.Println("")
 		fmt.Println("Invalid usage:")
 		fmt.Println("CORRECT Usage: import_master_data {tableName} {schoolYear} {district} {districtId} " +
-			"{fileName} {timeOfYear} {spreadsheetDate} {spreadsheetDate}")
+			"{fileName} {spreadsheetDate} {boyDateFormattedColumnName} {moyDateFormattedColumnName} " +
+			"{eoyDateFormattedColumnName} {studentLidColumnName} {studentColumnNameColumnName} {studentFirstColumnNameColumnName} " +
+			"{studentLastColumnNameColumnName} {gradeColumnName} {subjectColumnName} {scoreBoyColumnName} {scoreMoyColumnName} {scoreEoyColumnName} " +
+			"{performanceLevelBoyColumnName} {performanceLevelMoyColumnName} {performanceLevelEoyColumnName")
 		fmt.Println("")
 		fmt.Println("{tableName} - table to import from")
 		fmt.Println("{schoolYear} - school year")
@@ -106,6 +109,21 @@ func main() {
 		fmt.Println("{districtId} - district id")
 		fmt.Println("{fileName} - file name of the file this came from")
 		fmt.Println("{spreadsheetDate} - date of file this came from ")
+		fmt.Println("{boyDateFormattedColumnName} - name of column in temp table ")
+		fmt.Println("{moyDateFormattedColumnName} - name of column in temp table ")
+		fmt.Println("{eoyDateFormattedColumnName} - name of column in temp table ")
+		fmt.Println("{studentLidColumnName} - name of column in temp table ")
+		fmt.Println("{studentColumnNameColumnName} - name of column in temp table ")
+		fmt.Println("{studentFirstColumnNameColumnName}  - name of column in temp table ")
+		fmt.Println("{studentLastColumnNameColumnName} - name of column in temp table ")
+		fmt.Println("{gradeColumnName} - name of column in temp table ")
+		fmt.Println("{subjectColumnName} - name of column in temp table ")
+		fmt.Println("{scoreBoyColumnName} - name of column in temp table ")
+		fmt.Println("{scoreMoyColumnName} - name of column in temp table ")
+		fmt.Println("{scoreEoyColumnName}  - name of column in temp table ")
+		fmt.Println("{performanceLevelBoyColumnName} - name of column in temp table ")
+		fmt.Println("{performanceLevelMoyColumnName} - name of column in temp table ")
+		fmt.Println("{performanceLevelEoyColumnName} - name of column in temp table ")
 		fmt.Println("")
 		fmt.Println("")
 	}
@@ -116,11 +134,28 @@ func main() {
 	districtId := os.Args[4]
 	fileName := os.Args[5]
 	spreadsheetDate := os.Args[6]
+	boyDateColumnFormattedName := os.Args[7]
+	moyDateColumnFormattedName := os.Args[8]
+	eoyDateColumnFormattedName := os.Args[9]
+	studentLidName := os.Args[10]
+	studentNameColumnName := os.Args[11]
+	studentFirstNameColumnName := os.Args[12]
+	studentLastNameColumnName := os.Args[13]
+	gradeName := os.Args[14]
+	subjectName := os.Args[15]
+	scoreBoyName := os.Args[16]
+	scoreMoyName := os.Args[17]
+	scoreEoyName := os.Args[18]
+	performanceLevelBoyName := os.Args[19]
+	performanceLevelMoyName := os.Args[20]
+	performanceLevelEoyName := os.Args[21]
 
-	importMasterData(tableName, schoolYear, district, districtId, fileName, spreadsheetDate)
+	importMasterData(tableName, schoolYear, district, districtId, fileName, spreadsheetDate, boyDateColumnFormattedName,
+		moyDateColumnFormattedName, eoyDateColumnFormattedName, studentLidName, studentNameColumnName,
+		studentFirstNameColumnName, studentLastNameColumnName, gradeName, subjectName, scoreBoyName, scoreMoyName,
+		scoreEoyName, performanceLevelBoyName, performanceLevelMoyName, performanceLevelEoyName)
 }
 
-//*/
 func convertStrToDate(str string) string {
 	strArr := strings.Split(str, "-")
 	if len(strArr) > 2 {
@@ -193,25 +228,56 @@ func getFieldString(v *TableInfo, field string) string {
 	return f.String()
 }
 
-func importMasterData(tableName string, schoolYear string, district string, districtId string, fileName string, spreadsheetDate string) {
+func convetStrtoTimestampStandard(value string) string {
 
-	tableName = strings.Replace(fileName, "'", "", -1)
-	schoolYear = strings.Replace(fileName, "'", "", -1)
-	district = strings.Replace(fileName, "'", "", -1)
-	districtId = strings.Replace(fileName, "'", "", -1)
+	value = convertStrToDateStandard(value)
+	layout := "01/02 03:04:05PM '06 -0700"
+	t, _ := time.Parse(layout, value)
+	return strconv.FormatInt(t.Unix(), 10)
+}
+
+func convertStandardDateToDate(str string) string {
+
+	strArr := strings.Split(str, "/")
+	if len(strArr) > 2 {
+		year := strArr[2][len(strArr[2])-2:]
+		if len(year) == 2 {
+			year = "20" + year
+		}
+
+		month := strArr[0]
+		if len(month) == 1 {
+			month = "0" + month
+		}
+		day := strArr[1]
+		if len(day) == 1 {
+			day = "0" + day
+		}
+		retStr := year + "-" + month + "-" + day
+		return retStr
+	}
+	return ""
+}
+
+func importMasterData(tableName string, schoolYear string, district string, districtId string, fileName string,
+	spreadsheetDate string, boyDateColumnFormattedName string, moyDateColumnFormattedName string,
+	eoyDateColumnFormattedName string, studentLidName string, studentNameColumnName string,
+	studentFirstNameColumnName string, studentLastNameColumnName string, gradeName string, subjectName string,
+	scoreBoyName string, scoreMoyName string, scoreEoyName string, performanceLevelBoyName string,
+	performanceLevelMoyName string, performanceLevelEoyName string) {
+
+	tableName = strings.Replace(tableName, "'", "", -1)
+	schoolYear = strings.Replace(schoolYear, "'", "", -1)
+	district = strings.Replace(district, "'", "", -1)
+	districtId = strings.Replace(districtId, "'", "", -1)
 	fileName = strings.Replace(fileName, "'", "", -1)
-	spreadsheetDate = strings.Replace(fileName, "'", "", -1)
+	spreadsheetDate = strings.Replace(spreadsheetDate, "'", "", -1)
 
 	db, err := sql.Open("mysql", "root:eStud10@/e2lyii")
 	if err != nil {
 		fmt.Print("Error 2: " + err.Error())
 	}
 	defer db.Close()
-
-	/*/
-	layout := "01/02 03:04:05PM '06 -0700"
-	startDateCumulative := "1496275200" // 2017-06-01 (start of valid esuite logs/gis)
-	//*/
 
 	spreadsheetDateFormatted := ""
 
@@ -223,37 +289,21 @@ func importMasterData(tableName string, schoolYear string, district string, dist
 		"	created_at,           updated_at,           dashboard_id,  widget_title, import_date, " +
 		"import_date_formatted) VALUES " +
 		"('" + fileName + "', '',               '" + spreadsheetDate + "', '" + spreadsheetDateFormatted + "'," +
-		"	UNIX_TIMESTAMP(NOW()) UNIX_TIMESTAMP(NOW()) 0,             '',           UNIX_TIMESTAMP(NOW())," +
+		"	UNIX_TIMESTAMP(NOW()), UNIX_TIMESTAMP(NOW()), 0,             '',           UNIX_TIMESTAMP(NOW())," +
 		"NOW())"
+
 	res, err := db.Exec(sql)
 
 	if err != nil {
-		panic(err.Error())
+		panic("err1.5: " + err.Error())
 	}
 
 	lastId, err := res.LastInsertId()
 	lastIdStr := convertInt64ToString(lastId)
 
-	results, err := db.Query("SELECT * FROM " + tableName)
+	sql = "SELECT * FROM " + tableName
 
-	// params needed
-	boyDateColumnFormattedName := ""
-	moyDateColumnFormattedName := ""
-	eoyDateColumnFormattedName := ""
-	studentLidName := ""
-	studentNameColumnName := ""
-	studentFirstNameColumnName := ""
-	studentLastNameColumnName := ""
-	gradeName := ""
-	subjectName := ""
-
-	scoreBoyName := ""
-	scoreMoyName := ""
-	scoreEoyName := ""
-
-	performanceLevelBoyName := ""
-	performanceLevelMoyName := ""
-	performanceLevelEoyName := ""
+	results, err := db.Query(sql)
 
 	testStr(boyDateColumnFormattedName)
 	testStr(moyDateColumnFormattedName)
@@ -274,35 +324,13 @@ func importMasterData(tableName string, schoolYear string, district string, dist
 	testStr(performanceLevelEoyName)
 
 	// which creates
-	boyDate := ""
-	boyDateFormatted := ""
-
-	moyDate := ""
-	moyDateFormatted := ""
-
-	eoyDate := ""
-	eoyDateFormatted := ""
-
-	studentLid := ""
-	studentName := ""
-	studentFirstName := ""
-	studentLastName := ""
-	grade := ""
-	subject := ""
-
-	scoreBoy := ""
-	scoreMoy := ""
-	scoreEoy := ""
-
-	performanceLevelBoy := ""
-	performanceLevelMoy := ""
-	performanceLevelEoy := ""
 
 	if err != nil {
-		fmt.Print(err.Error())
+		fmt.Print("err1.3: " + err.Error())
 	}
 	var tableInfo TableInfo
 	for results.Next() {
+
 		err = results.Scan(&tableInfo.email,
 			&tableInfo.DistrictName, &tableInfo.Campus_2, &tableInfo.StudentLastName, &tableInfo.StudentFirstName,
 			&tableInfo.StudentMI, &tableInfo.Helper_Column, &tableInfo.StudentID, &tableInfo.Course_Teacher,
@@ -339,6 +367,151 @@ func importMasterData(tableName string, schoolYear string, district string, dist
 			&tableInfo.level1_badges_earned_count_eoy_cumulative, &tableInfo.level2_badges_earned_count_eoy_cumulative,
 			&tableInfo.level3_badges_earned_count_eoy_cumulative, &tableInfo.level4_badges_earned_count_eoy_cumulative)
 
+		tableInfo.DistrictName = strings.Replace(tableInfo.DistrictName, "'", "''", -1)
+		tableInfo.Campus_2 = strings.Replace(tableInfo.Campus_2, "'", "''", -1)
+		tableInfo.StudentLastName = strings.Replace(tableInfo.StudentLastName, "'", "''", -1)
+		tableInfo.StudentFirstName = strings.Replace(tableInfo.StudentFirstName, "'", "''", -1)
+		tableInfo.StudentMI = strings.Replace(tableInfo.StudentMI, "'", "''", -1)
+		tableInfo.Helper_Column = strings.Replace(tableInfo.Helper_Column, "'", "''", -1)
+		tableInfo.StudentID = strings.Replace(tableInfo.StudentID, "'", "''", -1)
+		tableInfo.Course_Teacher = strings.Replace(tableInfo.Course_Teacher, "'", "''", -1)
+		tableInfo.email = strings.Replace(tableInfo.email, "'", "''", -1)
+		tableInfo.Grade = strings.Replace(tableInfo.Grade, "'", "''", -1)
+		tableInfo.Subject = strings.Replace(tableInfo.Subject, "'", "''", -1)
+		tableInfo.TestName = strings.Replace(tableInfo.TestName, "'", "''", -1)
+		tableInfo.BOY_Test_Date = strings.Replace(tableInfo.BOY_Test_Date, "'", "''", -1)
+		tableInfo.BOYTestRITScore = strings.Replace(tableInfo.BOYTestRITScore, "'", "''", -1)
+		tableInfo.TestPercentile = strings.Replace(tableInfo.TestPercentile, "'", "''", -1)
+		tableInfo.AchievementQuintile = strings.Replace(tableInfo.AchievementQuintile, "'", "''", -1)
+		tableInfo.FallToFallObservedGrowth = strings.Replace(tableInfo.FallToFallObservedGrowth, "'", "''", -1)
+		tableInfo.FallToFallMetProjectedGrowth = strings.Replace(tableInfo.FallToFallMetProjectedGrowth, "'", "''", -1)
+		tableInfo.FallToFallConditionalGrowthIndex = strings.Replace(tableInfo.FallToFallConditionalGrowthIndex, "'", "''", -1)
+		tableInfo.FallToFallConditionalGrowthPercentile = strings.Replace(tableInfo.FallToFallConditionalGrowthPercentile, "'", "''", -1)
+		tableInfo.FallToFallGrowthQuintile = strings.Replace(tableInfo.FallToFallGrowthQuintile, "'", "''", -1)
+		tableInfo.ProjectedProficiencyStudy4 = strings.Replace(tableInfo.ProjectedProficiencyStudy4, "'", "''", -1)
+		tableInfo.ProjectedProficiencyLevel4 = strings.Replace(tableInfo.ProjectedProficiencyLevel4, "'", "''", -1)
+		tableInfo.SheetTab = strings.Replace(tableInfo.SheetTab, "'", "''", -1)
+		tableInfo.MOY_Test_Date = strings.Replace(tableInfo.MOY_Test_Date, "'", "''", -1)
+		tableInfo.MOY_RIT_Score = strings.Replace(tableInfo.MOY_RIT_Score, "'", "''", -1)
+		tableInfo.FalltoWinterMetProjectedGrowth = strings.Replace(tableInfo.FalltoWinterMetProjectedGrowth, "'", "''", -1)
+		tableInfo.EOY_Test_Date = strings.Replace(tableInfo.EOY_Test_Date, "'", "''", -1)
+		tableInfo.EOY_RIT_Score = strings.Replace(tableInfo.EOY_RIT_Score, "'", "''", -1)
+		tableInfo.FalltoSpringMetProjectedGrowth = strings.Replace(tableInfo.FalltoSpringMetProjectedGrowth, "'", "''", -1)
+		tableInfo.total_current_year_coaching_conversations = strings.Replace(tableInfo.total_current_year_coaching_conversations, "'", "''", -1)
+		tableInfo.total_current_year_coaching_logs = strings.Replace(tableInfo.total_current_year_coaching_logs, "'", "''", -1)
+		tableInfo.total_cumulative_coaching_conversations = strings.Replace(tableInfo.total_cumulative_coaching_conversations, "'", "''", -1)
+		tableInfo.total_cumulative_coaching_logs = strings.Replace(tableInfo.total_cumulative_coaching_logs, "'", "''", -1)
+		tableInfo.user_id = strings.Replace(tableInfo.user_id, "'", "''", -1)
+		tableInfo.district_id = strings.Replace(tableInfo.district_id, "'", "''", -1)
+		tableInfo.distrrict = strings.Replace(tableInfo.distrrict, "'", "''", -1)
+		tableInfo.campus_id = strings.Replace(tableInfo.campus_id, "'", "''", -1)
+		tableInfo.campus = strings.Replace(tableInfo.campus, "'", "''", -1)
+		tableInfo.first_name = strings.Replace(tableInfo.first_name, "'", "''", -1)
+		tableInfo.last_name = strings.Replace(tableInfo.last_name, "'", "''", -1)
+		tableInfo.user = strings.Replace(tableInfo.user, "'", "''", -1)
+		tableInfo.user_type = strings.Replace(tableInfo.user_type, "'", "''", -1)
+		tableInfo.title = strings.Replace(tableInfo.title, "'", "''", -1)
+		tableInfo.last_login = strings.Replace(tableInfo.last_login, "'", "''", -1)
+		tableInfo.assigned_coach_user_id = strings.Replace(tableInfo.assigned_coach_user_id, "'", "''", -1)
+		tableInfo.coaching_source = strings.Replace(tableInfo.coaching_source, "'", "''", -1)
+		tableInfo.assigned_coach = strings.Replace(tableInfo.assigned_coach, "'", "''", -1)
+		tableInfo.coaching_assignment = strings.Replace(tableInfo.coaching_assignment, "'", "''", -1)
+		tableInfo.total_badges_earned_boy_current_year = strings.Replace(tableInfo.total_badges_earned_boy_current_year, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_boy_current_year = strings.Replace(tableInfo.level1_badges_earned_count_boy_current_year, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_boy_current_year = strings.Replace(tableInfo.level2_badges_earned_count_boy_current_year, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_boy_current_year = strings.Replace(tableInfo.level3_badges_earned_count_boy_current_year, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_boy_current_year = strings.Replace(tableInfo.level4_badges_earned_count_boy_current_year, "'", "''", -1)
+		tableInfo.total_badges_earned_boy_cumulative = strings.Replace(tableInfo.total_badges_earned_boy_cumulative, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_boy_cumulative = strings.Replace(tableInfo.level1_badges_earned_count_boy_cumulative, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_boy_cumulative = strings.Replace(tableInfo.level2_badges_earned_count_boy_cumulative, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_boy_cumulative = strings.Replace(tableInfo.level3_badges_earned_count_boy_cumulative, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_boy_cumulative = strings.Replace(tableInfo.level4_badges_earned_count_boy_cumulative, "'", "''", -1)
+		tableInfo.total_badges_earned_moy_current_year = strings.Replace(tableInfo.total_badges_earned_moy_current_year, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_moy_current_year = strings.Replace(tableInfo.level1_badges_earned_count_moy_current_year, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_moy_current_year = strings.Replace(tableInfo.level2_badges_earned_count_moy_current_year, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_moy_current_year = strings.Replace(tableInfo.level3_badges_earned_count_moy_current_year, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_moy_current_year = strings.Replace(tableInfo.level4_badges_earned_count_moy_current_year, "'", "''", -1)
+		tableInfo.total_badges_earned_moy_cumulative = strings.Replace(tableInfo.total_badges_earned_moy_cumulative, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_moy_cumulative = strings.Replace(tableInfo.level1_badges_earned_count_moy_cumulative, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_moy_cumulative = strings.Replace(tableInfo.level2_badges_earned_count_moy_cumulative, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_moy_cumulative = strings.Replace(tableInfo.level3_badges_earned_count_moy_cumulative, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_moy_cumulative = strings.Replace(tableInfo.level4_badges_earned_count_moy_cumulative, "'", "''", -1)
+		tableInfo.total_badges_earned_eoy_current_year = strings.Replace(tableInfo.total_badges_earned_eoy_current_year, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_eoy_current_year = strings.Replace(tableInfo.level1_badges_earned_count_eoy_current_year, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_eoy_current_year = strings.Replace(tableInfo.level2_badges_earned_count_eoy_current_year, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_eoy_current_year = strings.Replace(tableInfo.level3_badges_earned_count_eoy_current_year, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_eoy_current_year = strings.Replace(tableInfo.level4_badges_earned_count_eoy_current_year, "'", "''", -1)
+		tableInfo.total_badges_earned_eoy_cumulative = strings.Replace(tableInfo.total_badges_earned_eoy_cumulative, "'", "''", -1)
+		tableInfo.level1_badges_earned_count_eoy_cumulative = strings.Replace(tableInfo.level1_badges_earned_count_eoy_cumulative, "'", "''", -1)
+		tableInfo.level2_badges_earned_count_eoy_cumulative = strings.Replace(tableInfo.level2_badges_earned_count_eoy_cumulative, "'", "''", -1)
+		tableInfo.level3_badges_earned_count_eoy_cumulative = strings.Replace(tableInfo.level3_badges_earned_count_eoy_cumulative, "'", "''", -1)
+		tableInfo.level4_badges_earned_count_eoy_cumulative = strings.Replace(tableInfo.level4_badges_earned_count_eoy_cumulative, "'", "''", -1)
+
+		tableInfo2 := &tableInfo
+
+		boyDateFormatted := getFieldString(tableInfo2, boyDateColumnFormattedName)
+		boyDate := convetStrtoTimestampStandard(boyDateFormatted)
+		boyDateFormatted = convertStandardDateToDate(boyDateFormatted)
+
+		moyDateFormatted := getFieldString(tableInfo2, moyDateColumnFormattedName)
+		moyDate := convetStrtoTimestampStandard(moyDateFormatted)
+		moyDateFormatted = convertStandardDateToDate(moyDateFormatted)
+
+		eoyDateFormatted := getFieldString(tableInfo2, eoyDateColumnFormattedName)
+		eoyDate := convetStrtoTimestampStandard(eoyDateFormatted)
+		eoyDateFormatted = convertStandardDateToDate(eoyDateFormatted)
+
+		studentLid := ""
+		if studentLidName != "blank" {
+			studentLid = getFieldString(tableInfo2, eoyDateColumnFormattedName)
+		}
+		studentName := ""
+		if studentNameColumnName != "blank" {
+			studentName = getFieldString(tableInfo2, studentNameColumnName)
+		}
+		studentFirstName := ""
+		if studentFirstNameColumnName != "blank" {
+			studentFirstName = getFieldString(tableInfo2, studentFirstNameColumnName)
+		}
+		studentLastName := ""
+		if studentLastNameColumnName != "blank" {
+			studentLastName = getFieldString(tableInfo2, studentLastNameColumnName)
+		}
+		grade := ""
+		if gradeName != "blank" {
+			grade = getFieldString(tableInfo2, gradeName)
+		}
+		subject := ""
+		if subjectName != "blank" {
+			subject = getFieldString(tableInfo2, subjectName)
+		}
+
+		scoreBoy := ""
+		if scoreBoyName != "blank" {
+			scoreBoy = getFieldString(tableInfo2, scoreBoyName)
+		}
+		scoreMoy := ""
+		if scoreMoyName != "blank" {
+			scoreMoy = getFieldString(tableInfo2, scoreMoyName)
+		}
+		scoreEoy := ""
+		if scoreEoyName != "blank" {
+			scoreEoy = getFieldString(tableInfo2, scoreEoyName)
+		}
+
+		performanceLevelBoy := ""
+		if performanceLevelBoyName != "blank" {
+			performanceLevelBoy = getFieldString(tableInfo2, performanceLevelBoyName)
+		}
+		performanceLevelMoy := ""
+		if performanceLevelMoyName != "blank" {
+			performanceLevelMoy = getFieldString(tableInfo2, performanceLevelMoyName)
+		}
+		performanceLevelEoy := ""
+		if performanceLevelEoyName != "blank" {
+			performanceLevelEoy = getFieldString(tableInfo2, performanceLevelEoyName)
+		}
+
 		/**
 		 * Insert into Master Import Table
 		 */
@@ -373,6 +546,16 @@ func importMasterData(tableName string, schoolYear string, district string, dist
 			"level2_badges_earned_count_moy_cumulative,  " +
 			"level3_badges_earned_count_moy_cumulative, " +
 			"level4_badges_earned_count_moy_cumulative, " +
+			"total_badges_earned_eoy_current_year, " +
+			"level1_badges_earned_count_eoy_current_year,  " +
+			"level2_badges_earned_count_eoy_current_year, " +
+			"level3_badges_earned_count_eoy_current_year,  " +
+			"level4_badges_earned_count_eoy_current_year, " +
+			"total_badges_earned_eoy_cumulative,  " +
+			"level1_badges_earned_count_eoy_cumulative, " +
+			"level2_badges_earned_count_eoy_cumulative,  " +
+			"level3_badges_earned_count_eoy_cumulative, " +
+			"level4_badges_earned_count_eoy_cumulative, " +
 			"original_campus,  original_date,  student_lid,      student_name,       " +
 			"	student_first_name,       student_last_name,        grade,         subject,  " +
 			"score_boy,        score_moy,           score_eoy, " +
@@ -382,43 +565,55 @@ func importMasterData(tableName string, schoolYear string, district string, dist
 			"(" + lastIdStr + ", '" + tableInfo.email + "', " + boyDate + ", '" + boyDateFormatted + "', " +
 			"	" + moyDate + ", '" + moyDateFormatted + "', " + eoyDate + ", '" + eoyDateFormatted + "', " +
 			"'" + schoolYear + "', '" + district + "', " +
-			" " + districtId + ", '" + tableInfo.campus + "', + " + tableInfo.campus_id + ", '" + tableInfo.user + "'," +
+			" " + districtId + ", '" + tableInfo.campus + "', '" + tableInfo.campus_id + "', '" + tableInfo.user + "'," +
 			" " + tableInfo.user_id + ", '" + tableInfo.assigned_coach + "'," +
 			" 	'" + tableInfo.coaching_assignment + "', '" + tableInfo.coaching_source + "', " +
 			"	'" + tableInfo.user_type + "', " + tableInfo.total_current_year_coaching_conversations + ", " +
-			"" + tableInfo.total_current_year_coaching_logs + ", " +
-			"" + tableInfo.total_cumulative_coaching_conversations + "'," +
-			"" + tableInfo.total_cumulative_coaching_logs + ", " +
-			"" + tableInfo.total_badges_earned_boy_current_year + ", " +
-			"" + tableInfo.level1_badges_earned_count_boy_current_year + ", " +
-			"" + tableInfo.level2_badges_earned_count_boy_current_year + ", " +
-			"" + tableInfo.level3_badges_earned_count_boy_current_year + ", " +
-			"" + tableInfo.level4_badges_earned_count_boy_current_year + ", " +
-			"" + tableInfo.total_badges_earned_boy_cumulative + ", " +
-			"" + tableInfo.level1_badges_earned_count_boy_cumulative + ", " +
-			"" + tableInfo.level2_badges_earned_count_boy_cumulative + ", " +
-			"" + tableInfo.level3_badges_earned_count_boy_cumulative + ", " +
-			"" + tableInfo.level4_badges_earned_count_boy_cumulative + ", " +
-			"" + tableInfo.total_badges_earned_moy_current_year + ", " +
-			"" + tableInfo.level1_badges_earned_count_moy_current_year + ", " +
-			"" + tableInfo.level2_badges_earned_count_moy_current_year + ", " +
-			"" + tableInfo.level3_badges_earned_count_moy_current_year + ", " +
-			"" + tableInfo.level4_badges_earned_count_moy_current_year + ", " +
-			"" + tableInfo.total_badges_earned_moy_cumulative + ", " +
-			"" + tableInfo.level1_badges_earned_count_moy_cumulative + ", " +
-			"" + tableInfo.level2_badges_earned_count_moy_cumulative + ", " +
-			"" + tableInfo.level3_badges_earned_count_moy_cumulative + ", " +
-			"" + tableInfo.level4_badges_earned_count_moy_cumulative + ", " +
+			" " + tableInfo.total_current_year_coaching_logs + ", " +
+			" " + tableInfo.total_cumulative_coaching_conversations + "," +
+			" " + tableInfo.total_cumulative_coaching_logs + ", " +
+			" " + tableInfo.total_badges_earned_boy_current_year + ", " +
+			" " + tableInfo.level1_badges_earned_count_boy_current_year + ", " +
+			" " + tableInfo.level2_badges_earned_count_boy_current_year + ", " +
+			" " + tableInfo.level3_badges_earned_count_boy_current_year + ", " +
+			" " + tableInfo.level4_badges_earned_count_boy_current_year + ", " +
+			" " + tableInfo.total_badges_earned_boy_cumulative + ", " +
+			" " + tableInfo.level1_badges_earned_count_boy_cumulative + ", " +
+			" " + tableInfo.level2_badges_earned_count_boy_cumulative + ", " +
+			" " + tableInfo.level3_badges_earned_count_boy_cumulative + ", " +
+			" " + tableInfo.level4_badges_earned_count_boy_cumulative + ", " +
+			" " + tableInfo.total_badges_earned_moy_current_year + ", " +
+			" " + tableInfo.level1_badges_earned_count_moy_current_year + ", " +
+			" " + tableInfo.level2_badges_earned_count_moy_current_year + ", " +
+			" " + tableInfo.level3_badges_earned_count_moy_current_year + ", " +
+			" " + tableInfo.level4_badges_earned_count_moy_current_year + ", " +
+			" " + tableInfo.total_badges_earned_moy_cumulative + ", " +
+			" " + tableInfo.level1_badges_earned_count_moy_cumulative + ", " +
+			" " + tableInfo.level2_badges_earned_count_moy_cumulative + ", " +
+			" " + tableInfo.level3_badges_earned_count_moy_cumulative + ", " +
+			" " + tableInfo.level4_badges_earned_count_moy_cumulative + ", " +
+			" " + tableInfo.total_badges_earned_eoy_current_year + ", " +
+			" " + tableInfo.level1_badges_earned_count_eoy_current_year + ", " +
+			" " + tableInfo.level2_badges_earned_count_eoy_current_year + ", " +
+			" " + tableInfo.level3_badges_earned_count_eoy_current_year + ", " +
+			" " + tableInfo.level4_badges_earned_count_eoy_current_year + ", " +
+			" " + tableInfo.total_badges_earned_eoy_cumulative + ", " +
+			" " + tableInfo.level1_badges_earned_count_eoy_cumulative + ", " +
+			" " + tableInfo.level2_badges_earned_count_eoy_cumulative + ", " +
+			" " + tableInfo.level3_badges_earned_count_eoy_cumulative + ", " +
+			" " + tableInfo.level4_badges_earned_count_eoy_cumulative + ", " +
 			" '',            '',              '" + studentLid + "', '" + studentName + "', " +
 			"	'" + studentFirstName + "', '" + studentLastName + "', '" + grade + "', '" + subject + "', " +
-			"'" + scoreBoy + "', '" + scoreMoy + "', '" + scoreEoy + "' " +
+			"'" + scoreBoy + "', '" + scoreMoy + "', '" + scoreEoy + "', " +
 			"	'" + performanceLevelBoy + "', '" + performanceLevelMoy + "', '" + performanceLevelEoy + "'," +
 			"UNIX_TIMESTAMP(NOW()), UNIX_TIMESTAMP(NOW())) "
 
 		_, err := db.Exec(sql)
 
 		if err != nil {
-			panic(err.Error())
+			fmt.Println("sql: ", sql)
+			panic("err 1.6: " + err.Error())
 		}
 	}
+	fmt.Println("Script completed")
 }
